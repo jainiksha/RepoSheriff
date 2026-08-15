@@ -256,36 +256,111 @@ Rules:
         : "Repository needs significant improvement";
 
   return (
-    <main className="min-h-screen bg-[#fffdf5] text-[#111111]">
+    <main className="min-h-screen bg-[#fffdf5] text-[#111111] transition-colors duration-300 dark:bg-[#111111] dark:text-white">
 
-      {/* ================= HEADER ================= */}
-      <section className="border-b border-[#e9e2cf] bg-[#ffc515]">
-        <div className="mx-auto max-w-6xl px-6 py-16">
+      {/* =====================================================
+          Navigation
+      ====================================================== */}
+      <nav className="border-b border-[#e9e2cf] bg-[#ffc515]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
 
-          <p className="text-sm font-bold uppercase tracking-wider text-[#5f531f]">
-            REPOSITORY INTELLIGENCE
-          </p>
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <img
+              src="/reposheriff-logo.png"
+              alt="RepoSheriff logo"
+              className="h-16 w-28 object-contain"
+            />
 
-          <h1 className="mt-3 text-4xl font-bold md:text-5xl">
-            About RepoSheriff
-          </h1>
+            <span className="text-xl font-bold tracking-tight text-[#111111]">
+              RepoSheriff
+            </span>
+          </div>
 
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-[#5f531f]">
-            Making GitHub repositories easier to understand, analyze,
-            improve, and contribute to.
-          </p>
+          {/* Navigation links */}
+          <div className="hidden items-center gap-8 text-sm font-bold text-[#111111] md:flex">
+
+            {/* How it works */}
+            <span className="cursor-pointer hover:underline">
+              How it works
+            </span>
+
+            {/* Repository Health */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/health";
+              }}
+            >
+              Repository Health
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
+            {/* Project Summary */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/summary";
+              }}
+            >
+              Project Summary
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
+            {/* Issue Suggestions */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/issues";
+              }}
+            >
+              Issue Suggestions
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
+            {/* About */}
+            <span className="cursor-pointer hover:underline">
+              About
+            </span>
+
+          </div>
 
           <UserButton />
 
         </div>
+      </nav>
 
-      </section>
+      {/* =====================================================
+          Hero
+      ====================================================== */}
+      <section className="mx-auto max-w-6xl px-6 pb-20 pt-24">
 
+        <div className="mx-auto max-w-3xl text-center">
 
-      {/* ================= THE PROBLEM ================= */}
-      <section className="border-y border-[#e9e2cf] bg-white">
+          {/* Badge */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e9d99d] bg-[#fff3c4] px-4 py-2 text-sm text-[#8d6d00]">
+            <span className="h-2 w-2 rounded-full bg-[#ffc515]" />
+            Open-source repository intelligence
+          </div>
 
-        <div className="mx-auto max-w-6xl px-6 py-16">
           {/* Heading */}
           <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
             Your repo has secrets,
@@ -294,61 +369,43 @@ Rules:
             </span>
           </h1>
 
-          <p className="text-sm font-bold tracking-wider text-[#b28700]">
-            THE PROBLEM
+          {/* Description */}
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#6b685f] dark:text-gray-300">
+            RepoSheriff analyzes GitHub repositories, scores their health,
+            finds problems, and tells contributors exactly what to improve.
           </p>
 
-          <h2 className="mt-3 text-3xl font-bold">
-            Understanding an unfamiliar repository takes time.
-          </h2>
+          {/* Scanner */}
+          <div className="mx-auto mt-10 max-w-2xl">
 
-          <p className="mt-5 max-w-3xl leading-7 text-gray-600">
-            When developers enter a new project, they often need to understand
-            its structure, architecture, technologies, dependencies, code
-            quality, and existing issues before they can confidently make
-            changes or contribute.
-          </p>
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#e9e2cf] bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900 md:flex-row">
 
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
+              <input
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleScan();
+                  }
+                }}
+                placeholder="https://github.com/owner/repository"
+                className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
+              />
 
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
-              <div className="text-3xl">📂</div>
+              <button
+                type="button"
+                onClick={handleScan}
+                disabled={isScanning}
+                className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isScanning ? "Scanning..." : "Scan Repository"}
+              </button>
 
-              <h3 className="mt-4 text-xl font-bold">
-                Explore
-              </h3>
-
-              <p className="mt-2 leading-7 text-gray-600">
-                Developers manually explore folders, files, documentation,
-                and project structure.
-              </p>
             </div>
 
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
-              <div className="text-3xl">🧩</div>
-
-              <h3 className="mt-4 text-xl font-bold">
-                Understand
-              </h3>
-
-              <p className="mt-2 leading-7 text-gray-600">
-                They need to understand how different parts of the repository
-                work together.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
-              <div className="text-3xl">⏳</div>
-
-              <h3 className="mt-4 text-xl font-bold">
-                Spend Time
-              </h3>
-
-              <p className="mt-2 leading-7 text-gray-600">
-                This can create a long onboarding process before meaningful
-                contribution can begin.
-              </p>
-            </div>
+            <p className="mt-3 text-xs text-[#8b887e] dark:text-gray-400">
+              No GitHub installation required. Paste a public repository URL.
+            </p>
 
           </div>
 
@@ -358,113 +415,44 @@ Rules:
 
       
 
+      {/* =====================================================
+          Features
+      ====================================================== */}
+      <section className="border-t border-[#e9e2cf] bg-white dark:border-gray-700 dark:bg-[#111111]">
 
-      {/* ================= WHO IS IT FOR ================= */}
-      <section className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mx-auto max-w-6xl px-6 py-20">
 
-        <p className="text-sm font-bold tracking-wider text-[#b28700]">
-          WHO IS REPOSHERIFF FOR?
-        </p>
+          <div className="mb-12 max-w-2xl">
 
-        <h2 className="mt-3 text-3xl font-bold">
-          Built for developers and contributors.
-        </h2>
-
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-
-          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
-            <div className="text-3xl">👨‍💻</div>
-
-            <h3 className="mt-4 text-xl font-bold">
-              Developers
-            </h3>
-
-            <p className="mt-3 leading-7 text-gray-600">
-              Understand unfamiliar codebases faster and get a clearer
-              picture of project structure and health.
+            <p className="text-sm font-medium text-[#b28700]">
+              WHAT REPOSHERIFF DOES
             </p>
+
+            <h2 className="mt-3 text-3xl font-bold text-[#111111] dark:text-white md:text-4xl">
+              From GitHub repository to actionable report.
+            </h2>
+
           </div>
 
-          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
-            <div className="text-3xl">🌱</div>
+          <div className="grid gap-5 md:grid-cols-3">
 
-            <h3 className="mt-4 text-xl font-bold">
-              Beginners
-            </h3>
+            <Feature
+              number="01"
+              title="Health Score"
+              description="Get a clear score out of 100 based on repository quality and activity."
+            />
 
-            <p className="mt-3 leading-7 text-gray-600">
-              Reduce the difficulty of entering unfamiliar open-source
-              repositories.
-            </p>
-          </div>
+            <Feature
+              number="02"
+              title="Find Problems"
+              description="Discover missing documentation, stale issues, weak contributor practices, and more."
+            />
 
-          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
-            <div className="text-3xl">🤝</div>
-
-            <h3 className="mt-4 text-xl font-bold">
-              Contributors
-            </h3>
-
-            <p className="mt-3 leading-7 text-gray-600">
-              Find useful starting points and understand where meaningful
-              contributions can be made.
-            </p>
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* ================= WHY REPOSHERIFF ================= */}
-      <section className="border-y border-[#e9e2cf] bg-white">
-
-        <div className="mx-auto max-w-6xl px-6 py-16">
-
-          <p className="text-sm font-bold tracking-wider text-[#b28700]">
-            WHY REPOSHERIFF?
-          </p>
-
-          <h2 className="mt-3 text-3xl font-bold">
-            Spend less time exploring. Start contributing sooner.
-          </h2>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-
-            {/* Traditional */}
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-8">
-
-              <h3 className="text-xl font-bold">
-                Traditional Approach
-              </h3>
-
-              <div className="mt-6 space-y-4 text-gray-600">
-                <p>📖 Read documentation</p>
-                <p>📂 Explore files manually</p>
-                <p>🧩 Understand architecture</p>
-                <p>🔍 Search for issues</p>
-                <p>⏳ Spend hours onboarding</p>
-              </div>
-
-            </div>
-
-
-            {/* RepoSheriff */}
-            <div className="rounded-2xl border-2 border-[#ffc515] bg-[#fffdf5] p-8">
-
-              <h3 className="text-xl font-bold">
-                With RepoSheriff
-              </h3>
-
-              <div className="mt-6 space-y-4 text-gray-600">
-                <p>🤖 AI-powered repository analysis</p>
-                <p>📊 Quick repository insights</p>
-                <p>🧩 Easier architecture understanding</p>
-                <p>🐞 Issue and improvement insights</p>
-                <p>🚀 Contribution guidance</p>
-              </div>
-
-            </div>
+            <Feature
+              number="03"
+              title="Improve Faster"
+              description="Get plain-English suggestions explaining exactly what maintainers should fix."
+            />
 
           </div>
 
@@ -472,29 +460,79 @@ Rules:
 
       </section>
 
-
-      {/* ================= FINAL CTA ================= */}
-      <section className="bg-[#ffc515] px-6 py-20 text-center">
-
-        <p className="text-sm font-bold uppercase tracking-wider text-[#5f531f]">
-          REPOSHERIFF
-        </p>
-
-        <h2 className="mt-3 text-4xl font-bold md:text-5xl">
-          Minutes, Not Hours.
-        </h2>
-
-        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#5f531f]">
-          Turn complex repository exploration into a clearer,
-          AI-guided experience.
-        </p>
-
-        <p className="mt-8 text-lg font-bold">
-          Analyze • Understand • Improve • Contribute
-        </p>
-
-      </section>
+      {/* =====================================================
+          Footer
+      ====================================================== */}
+      <footer className="border-t border-[#e9e2cf] bg-[#ffc515] px-6 py-8 text-center text-sm text-[#5f531f]">
+        RepoSheriff — GitHub repository health & contributor intelligence
+      </footer>
 
     </main>
+  );
+}
+
+/* =========================================================
+   Check Component
+========================================================= */
+
+function Check({
+  name,
+  status,
+}: {
+  name: string;
+  status: "Passed" | "Warning";
+}) {
+  const passed = status === "Passed";
+
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-[#e9e2cf] bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
+
+      <span className="text-sm text-[#4f4c45] dark:text-gray-300">
+        {name}
+      </span>
+
+      <span
+        className={`rounded-full px-3 py-1 text-xs font-medium ${
+          passed
+            ? "bg-[#fff3c4] text-[#9a7400]"
+            : "bg-[#fff0c0] text-[#9a7400]"
+        }`}
+      >
+        {status}
+      </span>
+
+    </div>
+  );
+}
+
+/* =========================================================
+   Feature Component
+========================================================= */
+
+function Feature({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900">
+
+      <span className="text-sm font-semibold text-[#b28700]">
+        {number}
+      </span>
+
+      <h3 className="mt-5 text-xl font-semibold text-[#111111] dark:text-white">
+        {title}
+      </h3>
+
+      <p className="mt-3 leading-7 text-[#6b685f] dark:text-gray-300">
+        {description}
+      </p>
+
+    </div>
   );
 }
