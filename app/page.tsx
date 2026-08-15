@@ -1,508 +1,432 @@
 "use client";
 
 import { useState } from "react";
-import WizardBot from "@/components/WizardBot";
-
-type CheckResult = {
-  name: string;
-  status: "Passed" | "Warning";
-  message: string;
-};
-
-type ScanResult = {
-  success: boolean;
-  repository: {
-    name: string;
-    fullName: string;
-    description: string | null;
-    stars: number;
-    forks: number;
-    openIssues: number;
-    language: string | null;
-    defaultBranch: string;
-    url: string;
-  };
-  health: {
-    score: number;
-    status: string;
-    checks: CheckResult[];
-  };
-};
+import { useRouter } from "next/navigation";
+import styles from "./page.module.css";
 
 export default function Home() {
+  const router = useRouter();
+
   const [repoUrl, setRepoUrl] = useState("");
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleScan = async () => {
-    if (!repoUrl.trim()) {
-      setError("Please enter a GitHub repository URL.");
-      return;
-    }
+  const handleScan = () => {
+  if (!repoUrl.trim()) {
+    alert("Please enter a GitHub repository URL.");
+    return;
+  }
 
-    setLoading(true);
-    setError("");
-    setScanResult(null);
+  router.push("/dashboard");
+};
 
-    try {
-      const response = await fetch("/api/scan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: repoUrl.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to scan repository.");
-      }
-
-      setScanResult(data);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong while scanning."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   return (
-    <main className="min-h-screen bg-[#08090b] text-white">
-      {/* Navigation */}
-      <nav className="border-b border-white/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap 0.1">
-            <img
-              src="/reposheriff-logo.png"
-              alt="RepoSheriff logo"
-              className="h-20 w-35 object-contain"
-            />
+    <main className={styles.page}>
 
-            <span className="text-xl font-bold tracking-tight">
-              RepoSheriff
-            </span>
-          </div>
+      {/* NAVBAR */}
+      <nav className={styles.navbar}>
 
-          <div className="hidden gap-8 text-sm text-gray-400 md:flex">
-            <span className="cursor-pointer hover:text-white">
-              How it works
-            </span>
-            <span className="cursor-pointer hover:text-white">
-              Features
-            </span>
-            <span className="cursor-pointer hover:text-white">About</span>
-          </div>
+        <a href="#" className={styles.logo}>
+          <img
+            src="/reposheriff-logo.png"
+            alt="RepoSheriff"
+          />
+          <span>RepoSheriff</span>
+        </a>
 
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-lg border border-white/15 px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
-          >
-            GitHub
-          </a>
+        <div className={styles.navLinks}>
+          <a href="#how-it-works">How it works</a>
+          <a href="#checks">What we check</a>
         </div>
+
+        <button
+          className={styles.navButton}
+          onClick={() => alert("Login coming soon!")}
+        >
+          Login
+        </button>
+
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pb-20 pt-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/5 px-4 py-2 text-sm text-emerald-300">
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
-            Open-source repository intelligence
+
+      {/* HERO */}
+      <section className={styles.hero}>
+
+        <div className={styles.heroContent}>
+
+          <div className={styles.eyebrow}>
+            <span />
+            GITHUB REPOSITORY INTELLIGENCE
           </div>
 
-          <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
-            Know the health of
-            <span className="text-emerald-400"> any repo.</span>
+          <h1>
+            Your repository
+            <br />
+            has a <i>story.</i>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-400">
-            RepoSheriff analyzes GitHub repositories, scores their health,
-            finds problems, and tells contributors exactly what to improve.
+          <p className={styles.heroDescription}>
+            RepoSheriff investigates your GitHub repository,
+            finds what is healthy, what needs attention,
+            and what you should fix next.
           </p>
 
-          {/* Scanner */}
-          <div className="mx-auto mt-10 max-w-2xl">
-            <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3 shadow-2xl md:flex-row">
-              <input
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleScan();
-                  }
-                }}
-                placeholder="https://github.com/owner/repository"
-                className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-white outline-none placeholder:text-gray-600"
-              />
+          <div
+            id="scanner"
+            className={styles.scanner}
+          >
 
-              <button
-                onClick={handleScan}
-                disabled={loading}
-                className="rounded-xl bg-emerald-400 px-7 py-3 font-semibold text-black transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? "Scanning..." : "Scan Repository"}
-              </button>
-            </div>
+            <input
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              placeholder="github.com/owner/repository"
+            />
 
-            {error && (
-              <p className="mt-3 text-sm text-red-400">
-                {error}
-              </p>
-            )}
+            <button onClick={handleScan}>
+              Scan →
+            </button>
 
-            <p className="mt-3 text-xs text-gray-600">
-              No GitHub installation required. Paste a public repository URL.
-            </p>
           </div>
+
+          <p className={styles.scannerNote}>
+            Public repositories · No setup required
+          </p>
+
         </div>
-      </section>
 
-      {/* Dynamic Scan Result */}
-      {scanResult && (
-        <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0d0f12]">
-            {/* Repository Header */}
-            <div className="flex flex-col gap-5 border-b border-white/10 px-6 py-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Repository information
-                </p>
 
-                <h2 className="mt-1 text-2xl font-semibold">
-                  {scanResult.repository.fullName}
-                </h2>
+        {/* SHERIFF REPORT */}
+        <div className={styles.report}>
 
-                <p className="mt-2 text-gray-400">
-                  {scanResult.repository.description ||
-                    "No repository description available."}
-                </p>
-              </div>
+          <div className={styles.reportHeader}>
 
-              <a
-                href={scanResult.repository.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-lg border border-white/15 px-5 py-3 text-sm text-gray-300 hover:bg-white/5"
-              >
-                View on GitHub
-              </a>
+            <div>
+              <small>SHERIFF'S REPORT</small>
+
+              <h2>Repository Health</h2>
+
+              <p>github.com/example/project</p>
             </div>
 
-            {/* Repository Stats */}
-            <div className="grid gap-4 border-b border-white/10 p-6 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat
-                label="Stars"
-                value={scanResult.repository.stars}
-              />
+            <span>PUBLIC</span>
 
-              <Stat
-                label="Forks"
-                value={scanResult.repository.forks}
-              />
-
-              <Stat
-                label="Open Issues"
-                value={scanResult.repository.openIssues}
-              />
-
-              <Stat
-                label="Language"
-                value={scanResult.repository.language || "Unknown"}
-              />
-            </div>
-
-            {/* Health Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Repository health
-                </p>
-
-                <h2 className="mt-1 text-xl font-semibold">
-                  {scanResult.repository.fullName}
-                </h2>
-              </div>
-
-              <div
-                className={`rounded-full px-4 py-2 text-sm font-medium ${
-                  scanResult.health.status === "Healthy"
-                    ? "bg-emerald-400/10 text-emerald-400"
-                    : "bg-yellow-400/10 text-yellow-400"
-                }`}
-              >
-                {scanResult.health.status}
-              </div>
-            </div>
-
-            {/* Health Score + Checks */}
-            <div className="grid gap-6 p-6 md:grid-cols-3">
-              {/* Score */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-                <p className="text-sm text-gray-500">
-                  Health Score
-                </p>
-
-                <div className="mt-4 flex items-end gap-2">
-                  <span className="text-6xl font-bold">
-                    {scanResult.health.score}
-                  </span>
-
-                  <span className="mb-2 text-gray-500">
-                    / 100
-                  </span>
-                </div>
-
-                <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-emerald-400 transition-all"
-                    style={{
-                      width: `${scanResult.health.score}%`,
-                    }}
-                  />
-                </div>
-
-                <p className="mt-3 text-sm text-emerald-400">
-                  {scanResult.health.status} repository health
-                </p>
-              </div>
-
-              {/* Checks */}
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 md:col-span-2">
-                <p className="mb-4 text-sm text-gray-500">
-                  Repository checks
-                </p>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {scanResult.health.checks.map((check) => (
-                    <Check
-                      key={check.name}
-                      name={check.name}
-                      status={check.status}
-                      message={check.message}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Branch */}
-            <div className="border-t border-white/10 px-6 py-5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500">
-                  Default Branch
-                </span>
-
-                <span className="rounded-full bg-emerald-400/10 px-4 py-2 text-sm text-emerald-400">
-                  {scanResult.repository.defaultBranch}
-                </span>
-              </div>
-            </div>
           </div>
-        </section>
-      )}
 
-      {/* Static Preview when nothing has been scanned */}
-      {!scanResult && (
-        <section className="mx-auto max-w-6xl px-6 pb-24">
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#0d0f12]">
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
-              <div>
-                <p className="text-sm text-gray-500">
-                  Repository health preview
-                </p>
 
-                <h2 className="mt-1 text-xl font-semibold">
-                  Scan a repository to see its health
-                </h2>
-              </div>
+          <div className={styles.score}>
 
-              <div className="rounded-full bg-white/5 px-4 py-2 text-sm text-gray-500">
-                Waiting
-              </div>
+            <strong>82</strong>
+
+            <div>
+              <span>/100</span>
+              <small>OVERALL HEALTH</small>
+              <b>GOOD</b>
             </div>
 
-            <div className="grid gap-6 p-6 md:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 md:col-span-1">
-                <p className="text-sm text-gray-500">
-                  Health Score
-                </p>
-
-                <div className="mt-4">
-                  <span className="text-5xl font-bold text-gray-700">
-                    --
-                  </span>
-
-                  <span className="ml-2 text-gray-600">
-                    / 100
-                  </span>
-                </div>
-
-                <div className="mt-5 h-2 rounded-full bg-white/5" />
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 md:col-span-2">
-                <p className="mb-4 text-sm text-gray-500">
-                  Repository checks
-                </p>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <PreviewCheck name="README" />
-                  <PreviewCheck name="License" />
-                  <PreviewCheck name="Recent activity" />
-                  <PreviewCheck name="Description" />
-                  <PreviewCheck name="Open issues" />
-                  <PreviewCheck name="Community health" />
-                </div>
-              </div>
-            </div>
           </div>
-        </section>
-      )}
 
-      {/* Features */}
-      <section className="border-t border-white/10">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="mb-12 max-w-2xl">
-            <p className="text-sm font-medium text-emerald-400">
-              WHAT REPOSHERIFF DOES
+
+          <Metric name="Documentation" value={92} />
+          <Metric name="Code Quality" value={78} />
+          <Metric name="Security" value={84} />
+          <Metric name="Activity" value={89} />
+
+
+          <div className={styles.findings}>
+
+            <h3>
+              <span>!</span>
+              3 things need attention
+            </h3>
+
+            <p>
+              <b>01</b>
+              README needs installation instructions
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-              From GitHub repository to actionable report.
-            </h2>
+            <p>
+              <b>02</b>
+              4 issues have gone stale
+            </p>
+
+            <p>
+              <b>03</b>
+              No contributing guide found
+            </p>
+
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
-            <Feature
-              number="01"
-              title="Health Score"
-              description="Get a clear score out of 100 based on repository quality and activity."
-            />
-
-            <Feature
-              number="02"
-              title="Find Problems"
-              description="Discover missing documentation, stale issues, weak contributor practices, and more."
-            />
-
-            <Feature
-              number="03"
-              title="Improve Faster"
-              description="Get plain-English suggestions explaining exactly what maintainers should fix."
-            />
-          </div>
         </div>
+
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-gray-600">
-        RepoSheriff — GitHub repository health & contributor intelligence
+
+      {/* STATS */}
+      <section className={styles.stats}>
+
+        <div>
+          <strong>06+</strong>
+          <span>health checks</span>
+        </div>
+
+        <div>
+          <strong>100</strong>
+          <span>point score</span>
+        </div>
+
+        <div>
+          <strong>01</strong>
+          <span>repository URL</span>
+        </div>
+
+        <div>
+          <strong>0</strong>
+          <span>setup required</span>
+        </div>
+
+      </section>
+
+
+      {/* CHECKS */}
+      <section
+        id="checks"
+        className={styles.checks}
+      >
+
+        <div className={styles.sectionHeading}>
+
+          <small>01 — THE INVESTIGATION</small>
+
+          <h2>
+            What does the
+            <br />
+            <i>sheriff</i> check?
+          </h2>
+
+          <p>
+            RepoSheriff looks beyond the source code
+            to understand whether a repository is healthy,
+            maintained and contributor-friendly.
+          </p>
+
+        </div>
+
+
+        <div className={styles.checkGrid}>
+
+          <Check
+            number="01"
+            title="Documentation"
+            text="README, license, setup instructions and contribution guides."
+          />
+
+          <Check
+            number="02"
+            title="Activity"
+            text="Recent commits and maintenance signals."
+          />
+
+          <Check
+            number="03"
+            title="Community"
+            text="Stars, contributors, issues and project activity."
+          />
+
+          <Check
+            number="04"
+            title="Code Quality"
+            text="Structure, maintainability and potential problems."
+          />
+
+          <Check
+            number="05"
+            title="Security"
+            text="Important security warnings and weaknesses."
+          />
+
+          <Check
+            number="06"
+            title="Actionable Findings"
+            text="Understand what needs attention and what to do next."
+          />
+
+        </div>
+
+      </section>
+
+
+      {/* HOW IT WORKS */}
+      <section
+        id="how-it-works"
+        className={styles.how}
+      >
+
+        <div className={styles.sectionHeading}>
+
+          <small>02 — HOW IT WORKS</small>
+
+          <h2>
+            Three steps.
+            <br />
+            That's it.
+          </h2>
+
+        </div>
+
+
+        <div className={styles.steps}>
+
+          <Step
+            number="01"
+            title="Paste"
+            text="Drop in any public GitHub repository URL."
+          />
+
+          <Step
+            number="02"
+            title="Investigate"
+            text="RepoSheriff examines the repository."
+          />
+
+          <Step
+            number="03"
+            title="Understand"
+            text="Get a health score and clear recommendations."
+          />
+
+        </div>
+
+      </section>
+
+
+      {/* CTA */}
+      <section className={styles.finalCta}>
+
+        <img
+          src="/reposheriff-logo.png"
+          alt="RepoSheriff"
+        />
+
+        <small>REPOSITORY INTELLIGENCE</small>
+
+        <h2>
+          Don't just clone it.
+          <br />
+          <i>Understand it.</i>
+        </h2>
+
+        <p>
+          Give RepoSheriff a repository
+          and let the investigation begin.
+        </p>
+
+        <button onClick={() => router.push("/dashboard")}>
+          Scan a repository →
+        </button>
+
+      </section>
+
+
+      {/* FOOTER */}
+      <footer className={styles.footer}>
+
+        <div className={styles.footerLogo}>
+          <img
+            src="/reposheriff-logo.png"
+            alt=""
+          />
+
+          RepoSheriff
+        </div>
+
+        <span>
+          Repository intelligence for developers.
+        </span>
+
+        <a
+          href="https://github.com/Payal430/RepoSheriff"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub ↗
+        </a>
+
       </footer>
-            <WizardBot />
+
     </main>
   );
 }
 
-function Stat({
-  label,
+
+/* COMPONENTS */
+
+function Metric({
+  name,
   value,
 }: {
-  label: string;
-  value: string | number;
-}) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-      <p className="text-sm text-gray-500">{label}</p>
-
-      <p className="mt-4 text-3xl font-bold">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function Check({
-  name,
-  status,
-  message,
-}: {
   name: string;
-  status: "Passed" | "Warning";
-  message: string;
+  value: number;
 }) {
-  const passed = status === "Passed";
-
   return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-gray-300">
-          {name}
-        </span>
+    <div className={styles.metric}>
 
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            passed
-              ? "bg-emerald-400/10 text-emerald-400"
-              : "bg-yellow-400/10 text-yellow-400"
-          }`}
-        >
-          {status}
-        </span>
+      <div className={styles.metricTop}>
+        <span>{name}</span>
+        <b>{value}</b>
       </div>
 
-      <p className="mt-2 text-xs leading-5 text-gray-500">
-        {message}
-      </p>
+      <div className={styles.progress}>
+        <span style={{ width: `${value}%` }} />
+      </div>
+
     </div>
   );
 }
 
-function PreviewCheck({ name }: { name: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
-      <span className="text-sm text-gray-600">
-        {name}
-      </span>
 
-      <span className="rounded-full bg-white/5 px-3 py-1 text-xs text-gray-700">
-        --
-      </span>
-    </div>
-  );
-}
-
-function Feature({
+function Check({
   number,
   title,
-  description,
+  text,
 }: {
   number: string;
   title: string;
-  description: string;
+  text: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
-      <span className="text-sm text-emerald-400">
-        {number}
-      </span>
+    <article className={styles.checkCard}>
 
-      <h3 className="mt-5 text-xl font-semibold">
-        {title}
-      </h3>
+      <small>{number}</small>
 
-      <p className="mt-3 leading-7 text-gray-500">
-        {description}
-      </p>
-    </div>
+      <h3>{title}</h3>
+
+      <p>{text}</p>
+
+      <span>→</span>
+
+    </article>
+  );
+}
+
+
+function Step({
+  number,
+  title,
+  text,
+}: {
+  number: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <article className={styles.step}>
+
+      <small>{number}</small>
+
+      <h3>{title}</h3>
+
+      <p>{text}</p>
+
+    </article>
   );
 }
