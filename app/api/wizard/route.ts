@@ -54,6 +54,8 @@ async function groqChat(prompt: string): Promise<string> {
   return data?.choices?.[0]?.message?.content || "";
 }
 
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+
 // ======================================================
 // TYPES
 // ======================================================
