@@ -1,422 +1,215 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import ThemeToggle from "@/components/ThemeToggle";
-
-type ScanResult = {
-  repoName: string;
-  score: number | null;
-  summary: string;
-  checks: {
-    README: "Passed" | "Warning";
-    License: "Passed" | "Warning";
-    "Recent activity": "Passed" | "Warning";
-    Description: "Passed" | "Warning";
-    "Open issues": "Passed" | "Warning";
-    "Community health": "Passed" | "Warning";
-  };
-};
-
-export default function Home() {
-  const [repoUrl, setRepoUrl] = useState("");
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [repositoryAnalyzed, setRepositoryAnalyzed] = useState(false);
-
-  // Important for preventing hydration mismatch
-  const [mounted, setMounted] = useState(false);
-
-  /*
-   * Read sessionStorage only after the component
-   * has mounted in the browser.
-   */
-  useEffect(() => {
-    setMounted(true);
-
-    const savedScan = sessionStorage.getItem("reposheriff-scan");
-
-    if (savedScan) {
-      try {
-        const parsed = JSON.parse(savedScan) as ScanResult;
-
-        setScanResult(parsed);
-        setRepositoryAnalyzed(true);
-      } catch (error) {
-        console.error("Could not load saved scan:", error);
-
-        sessionStorage.removeItem("reposheriff-scan");
-      }
-    }
-  }, []);
-
-  const handleScan = async () => {
-    if (!repoUrl.trim()) {
-      alert("Please enter a GitHub repository URL.");
-      return;
-    }
-
-    setIsScanning(true);
-
-    try {
-      const cleanUrl = repoUrl.trim();
-
-      const res = await fetch("/api/wizard", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: `
-Analyze this GitHub repository: ${cleanUrl}
-
-Return your answer in exactly this JSON format:
-
-{
-  "repoName": "owner/repository",
-  "score": 85,
-  "summary": "Short explanation of repository health",
-  "checks": {
-    "README": "Passed",
-    "License": "Passed",
-    "Recent activity": "Passed",
-    "Description": "Passed",
-    "Open issues": "Warning",
-    "Community health": "Passed"
-  }
-}
-
-Rules:
-- score must be a number from 0 to 100.
-- Each check must be exactly "Passed" or "Warning".
-- Do not use markdown.
-- Do not put the JSON inside code fences.
-- Return only valid JSON.
-          `,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Scan failed");
-      }
-
-      console.log("Scan result:", data);
-
-      let parsed: ScanResult | null = null;
-
-      /*
-       * Try to parse AI reply
-       */
-      if (typeof data?.reply === "string") {
-        let reply = data.reply.trim();
-
-        reply = reply
-          .replace(/^```json\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
-
-        try {
-          parsed = JSON.parse(reply);
-        } catch {
-          const firstBrace = reply.indexOf("{");
-          const lastBrace = reply.lastIndexOf("}");
-
-          if (firstBrace !== -1 && lastBrace !== -1) {
-            try {
-              parsed = JSON.parse(
-                reply.slice(firstBrace, lastBrace + 1)
-              );
-            } catch {
-              parsed = null;
-            }
-          }
-        }
-      }
-
-      /*
-       * Fallback if API directly returns ScanResult
-       */
-      if (!parsed && data?.repoName) {
-        parsed = data as ScanResult;
-      }
-
-      /*
-       * Could not parse response
-       */
-      if (!parsed) {
-        console.error("Could not parse scan result:", data);
-
-        alert(
-          "Scan completed, but the AI response was not in the expected format."
-        );
-
-        return;
-      }
-
-      /*
-       * Build a clean result
-       */
-      const result: ScanResult = {
-        repoName:
-          parsed.repoName ||
-          cleanUrl
-            .replace("https://github.com/", "")
-            .replace("http://github.com/", "")
-            .replace(/\/$/, ""),
-
-        score:
-          typeof parsed.score === "number"
-            ? Math.max(0, Math.min(100, parsed.score))
-            : null,
-
-        summary:
-          parsed.summary || "Repository analysis completed.",
-
-        checks: {
-          README: parsed.checks?.README || "Warning",
-
-          License:
-            parsed.checks?.License || "Warning",
-
-          "Recent activity":
-            parsed.checks?.["Recent activity"] || "Warning",
-
-          Description:
-            parsed.checks?.Description || "Warning",
-
-          "Open issues":
-            parsed.checks?.["Open issues"] || "Warning",
-
-          "Community health":
-            parsed.checks?.["Community health"] || "Warning",
-        },
-      };
-
-      /*
-       * Update UI
-       */
-      setScanResult(result);
-      setRepositoryAnalyzed(true);
-
-      /*
-       * Save result for Health / Summary / Issues pages
-       */
-      sessionStorage.setItem(
-        "reposheriff-scan",
-        JSON.stringify(result)
-      );
-
-      alert("Scan completed!");
-    } catch (error) {
-      console.error("Scan error:", error);
-
-      alert(
-        error instanceof Error
-          ? `Scan failed: ${error.message}`
-          : "Scan failed"
-      );
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  /*
-   * Repository name shown in dashboard
-   */
-  const displayedRepo =
-    scanResult?.repoName ||
-    (repoUrl
-      ? repoUrl
-          .replace("https://github.com/", "")
-          .replace("http://github.com/", "")
-          .replace(/\/$/, "")
-      : "facebook / react");
-
-  /*
-   * Default score for preview
-   */
-  const score = scanResult?.score ?? 92;
-
-  const healthLabel =
-    score >= 80
-      ? "Healthy"
-      : score >= 60
-        ? "Needs attention"
-        : "At risk";
-
-  const healthDescription =
-    score >= 80
-      ? "Excellent repository health"
-      : score >= 60
-        ? "Repository needs some attention"
-        : "Repository needs significant improvement";
-
+export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-[#fffdf5] text-[#111111] transition-colors duration-300 dark:bg-[#111111] dark:text-white">
+    <main className="min-h-screen bg-[#fffdf5] text-[#111111]">
 
-      {/* =====================================================
-          Navigation
-      ====================================================== */}
-      <nav className="border-b border-[#e9e2cf] bg-[#ffc515]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+      {/* ================= HEADER ================= */}
+      <section className="border-b border-[#e9e2cf] bg-[#ffc515]">
+        <div className="mx-auto max-w-6xl px-6 py-16">
 
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <img
-              src="/reposheriff-logo.png"
-              alt="RepoSheriff logo"
-              className="h-16 w-28 object-contain"
-            />
-
-            <span className="text-xl font-bold tracking-tight text-[#111111]">
-              RepoSheriff
-            </span>
-          </div>
-
-          {/* Navigation links */}
-          <div className="hidden items-center gap-8 text-sm font-bold text-[#111111] md:flex">
-
-            {/* How it works */}
-            <span className="cursor-pointer hover:underline">
-              How it works
-            </span>
-
-            {/* Repository Health */}
-            <span
-              className={
-                mounted && repositoryAnalyzed
-                  ? "cursor-pointer hover:underline"
-                  : "cursor-not-allowed opacity-50"
-              }
-              onClick={() => {
-                if (!mounted || !repositoryAnalyzed) return;
-
-                window.location.href = "/dashboard/health";
-              }}
-            >
-              Repository Health
-              {(!mounted || !repositoryAnalyzed) && " 🔒"}
-            </span>
-
-            {/* Project Summary */}
-            <span
-              className={
-                mounted && repositoryAnalyzed
-                  ? "cursor-pointer hover:underline"
-                  : "cursor-not-allowed opacity-50"
-              }
-              onClick={() => {
-                if (!mounted || !repositoryAnalyzed) return;
-
-                window.location.href = "/dashboard/summary";
-              }}
-            >
-              Project Summary
-              {(!mounted || !repositoryAnalyzed) && " 🔒"}
-            </span>
-
-            {/* Issue Suggestions */}
-            <span
-              className={
-                mounted && repositoryAnalyzed
-                  ? "cursor-pointer hover:underline"
-                  : "cursor-not-allowed opacity-50"
-              }
-              onClick={() => {
-                if (!mounted || !repositoryAnalyzed) return;
-
-                window.location.href = "/dashboard/issues";
-              }}
-            >
-              Issue Suggestions
-              {(!mounted || !repositoryAnalyzed) && " 🔒"}
-            </span>
-
-            {/* About */}
-            <span className="cursor-pointer hover:underline">
-              About
-            </span>
-
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-
-            {/* Day / Night Toggle */}
-            <ThemeToggle />
-
-            {/* GitHub */}
-            <button
-              type="button"
-              className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]"
-            >
-              GitHub
-            </button>
-
-          </div>
-
-        </div>
-      </nav>
-
-      {/* =====================================================
-          Hero
-      ====================================================== */}
-      <section className="mx-auto max-w-6xl px-6 pb-20 pt-24">
-
-        <div className="mx-auto max-w-3xl text-center">
-
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e9d99d] bg-[#fff3c4] px-4 py-2 text-sm text-[#8d6d00]">
-            <span className="h-2 w-2 rounded-full bg-[#ffc515]" />
-            Open-source repository intelligence
-          </div>
-
-          {/* Heading */}
-          <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
-            Know the health of
-            <span className="text-[#b28700]">
-              {" "}any repo.
-            </span>
-          </h1>
-
-          {/* Description */}
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#6b685f] dark:text-gray-300">
-            RepoSheriff analyzes GitHub repositories, scores their health,
-            finds problems, and tells contributors exactly what to improve.
+          <p className="text-sm font-bold uppercase tracking-wider text-[#5f531f]">
+            REPOSITORY INTELLIGENCE
           </p>
 
-          {/* Scanner */}
-          <div className="mx-auto mt-10 max-w-2xl">
+          <h1 className="mt-3 text-4xl font-bold md:text-5xl">
+            About RepoSheriff
+          </h1>
 
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#e9e2cf] bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900 md:flex-row">
+          <p className="mt-5 max-w-3xl text-lg leading-8 text-[#5f531f]">
+            Making GitHub repositories easier to understand, analyze,
+            improve, and contribute to.
+          </p>
 
-              <input
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleScan();
-                  }
-                }}
-                placeholder="https://github.com/owner/repository"
-                className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
-              />
+        </div>
+      </section>
 
-              <button
-                type="button"
-                onClick={handleScan}
-                disabled={isScanning}
-                className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isScanning ? "Scanning..." : "Scan Repository"}
-              </button>
 
+      {/* ================= WHAT IS REPOSHERIFF ================= */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+
+        <div className="rounded-3xl border border-[#e9e2cf] bg-white p-8 shadow-sm md:p-10">
+
+          <p className="text-sm font-bold tracking-wider text-[#b28700]">
+            WHAT IS REPOSHERIFF?
+          </p>
+
+          <h2 className="mt-3 text-3xl font-bold">
+            Understand complex repositories faster.
+          </h2>
+
+          <p className="mt-5 max-w-4xl text-lg leading-8 text-gray-600">
+            RepoSheriff is an AI-powered Open Source Repository Intelligence
+            Platform designed to help developers quickly understand and
+            analyze complex GitHub repositories.
+          </p>
+
+          <p className="mt-4 max-w-4xl leading-7 text-gray-600">
+            Instead of spending hours manually exploring folders, files,
+            documentation, dependencies, and project structure, RepoSheriff
+            brings important repository insights together in one place.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= THE PROBLEM ================= */}
+      <section className="border-y border-[#e9e2cf] bg-white">
+
+        <div className="mx-auto max-w-6xl px-6 py-16">
+
+          <p className="text-sm font-bold tracking-wider text-[#b28700]">
+            THE PROBLEM
+          </p>
+
+          <h2 className="mt-3 text-3xl font-bold">
+            Understanding an unfamiliar repository takes time.
+          </h2>
+
+          <p className="mt-5 max-w-3xl leading-7 text-gray-600">
+            When developers enter a new project, they often need to understand
+            its structure, architecture, technologies, dependencies, code
+            quality, and existing issues before they can confidently make
+            changes or contribute.
+          </p>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
+              <div className="text-3xl">📂</div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                Explore
+              </h3>
+
+              <p className="mt-2 leading-7 text-gray-600">
+                Developers manually explore folders, files, documentation,
+                and project structure.
+              </p>
             </div>
 
-            <p className="mt-3 text-xs text-[#8b887e] dark:text-gray-400">
-              No GitHub installation required. Paste a public repository URL.
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
+              <div className="text-3xl">🧩</div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                Understand
+              </h3>
+
+              <p className="mt-2 leading-7 text-gray-600">
+                They need to understand how different parts of the repository
+                work together.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6">
+              <div className="text-3xl">⏳</div>
+
+              <h3 className="mt-4 text-xl font-bold">
+                Spend Time
+              </h3>
+
+              <p className="mt-2 leading-7 text-gray-600">
+                This can create a long onboarding process before meaningful
+                contribution can begin.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= HOW WE HELP ================= */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
+
+        <p className="text-sm font-bold tracking-wider text-[#b28700]">
+          HOW REPOSHERIFF HELPS
+        </p>
+
+        <h2 className="mt-3 text-3xl font-bold">
+          From repository exploration to actionable insights.
+        </h2>
+
+        <p className="mt-5 max-w-3xl leading-7 text-gray-600">
+          RepoSheriff combines repository analysis and intelligent insights
+          to give developers a clearer understanding of unfamiliar projects.
+        </p>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+
+          {/* Analyze */}
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ffc515] text-2xl">
+              🔍
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold">
+              Repository Analysis
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Analyze repository structure, architecture, technologies,
+              dependencies, and other important project information.
+            </p>
+
+          </div>
+
+
+          {/* AI Understanding */}
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ffc515] text-2xl">
+              🤖
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold">
+              AI-Powered Understanding
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Get useful explanations and insights that make unfamiliar
+              repositories easier to understand.
+            </p>
+
+          </div>
+
+
+          {/* Health */}
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ffc515] text-2xl">
+              📊
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold">
+              Repository Health
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Evaluate important aspects of repository quality such as
+              maintainability, testing, security, and overall health.
+            </p>
+
+          </div>
+
+
+          {/* Issues */}
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ffc515] text-2xl">
+              🐞
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold">
+              Issue & Improvement Insights
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Identify potential issues, code-quality concerns, and areas
+              where the repository can be improved.
             </p>
 
           </div>
@@ -425,124 +218,70 @@ Rules:
 
       </section>
 
-      {/* =====================================================
-          Repository Preview
-      ====================================================== */}
-      <section className="mx-auto max-w-6xl px-6 pb-24">
 
-        <div className="overflow-hidden rounded-3xl border border-[#e9e2cf] bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
+      {/* ================= HOW IT WORKS ================= */}
+      <section className="border-y border-[#e9e2cf] bg-white">
 
-          {/* Dashboard Header */}
-          <div className="flex items-center justify-between border-b border-[#e9e2cf] px-6 py-5 dark:border-gray-700">
+        <div className="mx-auto max-w-6xl px-6 py-16">
 
-            <div>
-              <p className="text-sm text-[#8b887e] dark:text-gray-400">
-                Repository health
+          <p className="text-sm font-bold tracking-wider text-[#b28700]">
+            HOW IT WORKS
+          </p>
+
+          <h2 className="mt-3 text-3xl font-bold">
+            From GitHub repository to useful insights.
+          </h2>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-5">
+
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 text-center">
+              <div className="text-3xl">1️⃣</div>
+              <h3 className="mt-3 font-bold">
+                Repository
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Select a GitHub repository.
               </p>
-
-              <h2 className="mt-1 text-xl font-semibold text-[#111111] dark:text-white">
-                {displayedRepo}
-              </h2>
             </div>
 
-            <div className="rounded-full bg-[#fff3c4] px-4 py-2 text-sm font-medium text-[#9a7400]">
-              {healthLabel}
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 text-center">
+              <div className="text-3xl">2️⃣</div>
+              <h3 className="mt-3 font-bold">
+                Analyze
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Analyze repository information.
+              </p>
             </div>
 
-          </div>
-
-          {/* Dashboard Content */}
-          <div className="grid gap-6 p-6 md:grid-cols-3">
-
-            {/* Score */}
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 dark:border-gray-700 dark:bg-gray-800">
-
-              <p className="text-sm text-[#8b887e] dark:text-gray-400">
-                Health Score
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 text-center">
+              <div className="text-3xl">3️⃣</div>
+              <h3 className="mt-3 font-bold">
+                Understand
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Understand structure and project health.
               </p>
-
-              <div className="mt-4 flex items-end gap-2">
-
-                <span className="text-6xl font-bold text-[#111111] dark:text-white">
-                  {score}
-                </span>
-
-                <span className="mb-2 text-[#8b887e] dark:text-gray-400">
-                  / 100
-                </span>
-
-              </div>
-
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#eee9dc] dark:bg-gray-700">
-
-                <div
-                  className="h-full rounded-full bg-[#ffc515]"
-                  style={{
-                    width: `${score}%`,
-                  }}
-                />
-
-              </div>
-
-              <p className="mt-3 text-sm text-[#b28700]">
-                {healthDescription}
-              </p>
-
-              {scanResult?.summary && (
-                <p className="mt-4 text-sm leading-6 text-[#6b685f] dark:text-gray-300">
-                  {scanResult.summary}
-                </p>
-              )}
-
             </div>
 
-            {/* Checks */}
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 dark:border-gray-700 dark:bg-gray-800 md:col-span-2">
-
-              <p className="mb-4 text-sm text-[#8b887e] dark:text-gray-400">
-                Repository checks
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 text-center">
+              <div className="text-3xl">4️⃣</div>
+              <h3 className="mt-3 font-bold">
+                Insights
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Discover issues and improvements.
               </p>
+            </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-
-                <Check
-                  name="README"
-                  status={scanResult?.checks.README || "Passed"}
-                />
-
-                <Check
-                  name="License"
-                  status={scanResult?.checks.License || "Passed"}
-                />
-
-                <Check
-                  name="Recent activity"
-                  status={
-                    scanResult?.checks["Recent activity"] || "Passed"
-                  }
-                />
-
-                <Check
-                  name="Description"
-                  status={scanResult?.checks.Description || "Passed"}
-                />
-
-                <Check
-                  name="Open issues"
-                  status={
-                    scanResult?.checks["Open issues"] || "Warning"
-                  }
-                />
-
-                <Check
-                  name="Community health"
-                  status={
-                    scanResult?.checks["Community health"] || "Passed"
-                  }
-                />
-
-              </div>
-
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 text-center">
+              <div className="text-3xl">5️⃣</div>
+              <h3 className="mt-3 font-bold">
+                Contribute
+              </h3>
+              <p className="mt-2 text-sm text-gray-600">
+                Find better ways to contribute.
+              </p>
             </div>
 
           </div>
@@ -551,44 +290,113 @@ Rules:
 
       </section>
 
-      {/* =====================================================
-          Features
-      ====================================================== */}
-      <section className="border-t border-[#e9e2cf] bg-white dark:border-gray-700 dark:bg-[#111111]">
 
-        <div className="mx-auto max-w-6xl px-6 py-20">
+      {/* ================= WHO IS IT FOR ================= */}
+      <section className="mx-auto max-w-6xl px-6 py-16">
 
-          <div className="mb-12 max-w-2xl">
+        <p className="text-sm font-bold tracking-wider text-[#b28700]">
+          WHO IS REPOSHERIFF FOR?
+        </p>
 
-            <p className="text-sm font-medium text-[#b28700]">
-              WHAT REPOSHERIFF DOES
+        <h2 className="mt-3 text-3xl font-bold">
+          Built for developers and contributors.
+        </h2>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
+            <div className="text-3xl">👨‍💻</div>
+
+            <h3 className="mt-4 text-xl font-bold">
+              Developers
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Understand unfamiliar codebases faster and get a clearer
+              picture of project structure and health.
             </p>
-
-            <h2 className="mt-3 text-3xl font-bold text-[#111111] dark:text-white md:text-4xl">
-              From GitHub repository to actionable report.
-            </h2>
-
           </div>
 
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
+            <div className="text-3xl">🌱</div>
 
-            <Feature
-              number="01"
-              title="Health Score"
-              description="Get a clear score out of 100 based on repository quality and activity."
-            />
+            <h3 className="mt-4 text-xl font-bold">
+              Beginners
+            </h3>
 
-            <Feature
-              number="02"
-              title="Find Problems"
-              description="Discover missing documentation, stale issues, weak contributor practices, and more."
-            />
+            <p className="mt-3 leading-7 text-gray-600">
+              Reduce the difficulty of entering unfamiliar open-source
+              repositories.
+            </p>
+          </div>
 
-            <Feature
-              number="03"
-              title="Improve Faster"
-              description="Get plain-English suggestions explaining exactly what maintainers should fix."
-            />
+          <div className="rounded-2xl border border-[#e9e2cf] bg-white p-7 shadow-sm">
+            <div className="text-3xl">🤝</div>
+
+            <h3 className="mt-4 text-xl font-bold">
+              Contributors
+            </h3>
+
+            <p className="mt-3 leading-7 text-gray-600">
+              Find useful starting points and understand where meaningful
+              contributions can be made.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* ================= WHY REPOSHERIFF ================= */}
+      <section className="border-y border-[#e9e2cf] bg-white">
+
+        <div className="mx-auto max-w-6xl px-6 py-16">
+
+          <p className="text-sm font-bold tracking-wider text-[#b28700]">
+            WHY REPOSHERIFF?
+          </p>
+
+          <h2 className="mt-3 text-3xl font-bold">
+            Spend less time exploring. Start contributing sooner.
+          </h2>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+
+            {/* Traditional */}
+            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-8">
+
+              <h3 className="text-xl font-bold">
+                Traditional Approach
+              </h3>
+
+              <div className="mt-6 space-y-4 text-gray-600">
+                <p>📖 Read documentation</p>
+                <p>📂 Explore files manually</p>
+                <p>🧩 Understand architecture</p>
+                <p>🔍 Search for issues</p>
+                <p>⏳ Spend hours onboarding</p>
+              </div>
+
+            </div>
+
+
+            {/* RepoSheriff */}
+            <div className="rounded-2xl border-2 border-[#ffc515] bg-[#fffdf5] p-8">
+
+              <h3 className="text-xl font-bold">
+                With RepoSheriff
+              </h3>
+
+              <div className="mt-6 space-y-4 text-gray-600">
+                <p>🤖 AI-powered repository analysis</p>
+                <p>📊 Quick repository insights</p>
+                <p>🧩 Easier architecture understanding</p>
+                <p>🐞 Issue and improvement insights</p>
+                <p>🚀 Contribution guidance</p>
+              </div>
+
+            </div>
 
           </div>
 
@@ -596,79 +404,29 @@ Rules:
 
       </section>
 
-      {/* =====================================================
-          Footer
-      ====================================================== */}
-      <footer className="border-t border-[#e9e2cf] bg-[#ffc515] px-6 py-8 text-center text-sm text-[#5f531f]">
-        RepoSheriff — GitHub repository health & contributor intelligence
-      </footer>
+
+      {/* ================= FINAL CTA ================= */}
+      <section className="bg-[#ffc515] px-6 py-20 text-center">
+
+        <p className="text-sm font-bold uppercase tracking-wider text-[#5f531f]">
+          REPOSHERIFF
+        </p>
+
+        <h2 className="mt-3 text-4xl font-bold md:text-5xl">
+          Minutes, Not Hours.
+        </h2>
+
+        <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#5f531f]">
+          Turn complex repository exploration into a clearer,
+          AI-guided experience.
+        </p>
+
+        <p className="mt-8 text-lg font-bold">
+          Analyze • Understand • Improve • Contribute
+        </p>
+
+      </section>
 
     </main>
-  );
-}
-
-/* =========================================================
-   Check Component
-========================================================= */
-
-function Check({
-  name,
-  status,
-}: {
-  name: string;
-  status: "Passed" | "Warning";
-}) {
-  const passed = status === "Passed";
-
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-[#e9e2cf] bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-900">
-
-      <span className="text-sm text-[#4f4c45] dark:text-gray-300">
-        {name}
-      </span>
-
-      <span
-        className={`rounded-full px-3 py-1 text-xs font-medium ${
-          passed
-            ? "bg-[#fff3c4] text-[#9a7400]"
-            : "bg-[#fff0c0] text-[#9a7400]"
-        }`}
-      >
-        {status}
-      </span>
-
-    </div>
-  );
-}
-
-/* =========================================================
-   Feature Component
-========================================================= */
-
-function Feature({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900">
-
-      <span className="text-sm font-semibold text-[#b28700]">
-        {number}
-      </span>
-
-      <h3 className="mt-5 text-xl font-semibold text-[#111111] dark:text-white">
-        {title}
-      </h3>
-
-      <p className="mt-3 leading-7 text-[#6b685f] dark:text-gray-300">
-        {description}
-      </p>
-
-    </div>
   );
 }
