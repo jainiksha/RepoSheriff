@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -44,9 +45,7 @@ export default function Home() {
             </span>
           </div>
 
-          <button className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]">
-            GitHub
-          </button>
+          <UserButton />
 
         </div>
       </nav>
