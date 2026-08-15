@@ -1,9 +1,58 @@
-import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// ======================================================
+// GROQ CONFIGURATION
+// ======================================================
+
+const GROQ_MODEL = "llama-3.3-70b-versatile";
+
+async function groqChat(prompt: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY is not configured.");
+  }
+
+  const response = await fetch(
+    "https://api.groq.com/openai/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+
+        temperature: 0.2,
+
+        response_format: {
+          type: "json_object",
+        },
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Groq API error:", data);
+
+    throw new Error(
+      data?.error?.message ||
+        `Groq API request failed with status ${response.status}.`
+    );
+  }
+
+  return data?.choices?.[0]?.message?.content || "";
+}
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
@@ -42,6 +91,7 @@ type ScanResult = {
   technologies: string[];
   strengths: string[];
   improvements: string[];
+
   checks: {
     README: "Passed" | "Warning";
     License: "Passed" | "Warning";
@@ -63,8 +113,8 @@ async function githubFetch<T>(url: string): Promise<T> {
   };
 
   // Optional GitHub token.
-  // Public repositories work without it, but a token gives
-  // higher API rate limits.
+  // Public repositories work without one.
+  // A token provides higher GitHub API rate limits.
   if (process.env.GITHUB_TOKEN) {
     headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
@@ -207,7 +257,7 @@ function detectTechnologies(
   const technologies = new Set<string>();
 
   // ====================================================
-  // 1. PROGRAMMING LANGUAGES
+  // PROGRAMMING LANGUAGES
   // ====================================================
 
   const languageMap: Record<string, string> = {
@@ -237,7 +287,7 @@ function detectTechnologies(
   });
 
   // ====================================================
-  // 2. PACKAGE.JSON
+  // PACKAGE.JSON
   // ====================================================
 
   const packageJson = files["package.json"];
@@ -402,7 +452,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 3. PYTHON
+  // PYTHON
   // ====================================================
 
   if (files["requirements.txt"]) {
@@ -418,7 +468,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 4. JAVA
+  // JAVA
   // ====================================================
 
   if (files["pom.xml"]) {
@@ -432,7 +482,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 5. KOTLIN
+  // KOTLIN
   // ====================================================
 
   if (files["build.gradle.kts"]) {
@@ -441,7 +491,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 6. RUST
+  // RUST
   // ====================================================
 
   if (files["Cargo.toml"]) {
@@ -450,7 +500,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 7. GO
+  // GO
   // ====================================================
 
   if (files["go.mod"]) {
@@ -458,7 +508,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 8. PHP
+  // PHP
   // ====================================================
 
   if (files["composer.json"]) {
@@ -467,7 +517,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 9. DOCKER
+  // DOCKER
   // ====================================================
 
   if (
@@ -479,7 +529,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 10. TYPESCRIPT CONFIG
+  // TYPESCRIPT
   // ====================================================
 
   if (files["tsconfig.json"]) {
@@ -487,7 +537,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 11. NEXT.JS CONFIG
+  // NEXT.JS
   // ====================================================
 
   if (
@@ -498,7 +548,7 @@ function detectTechnologies(
   }
 
   // ====================================================
-  // 12. VITE CONFIG
+  // VITE
   // ====================================================
 
   if (
@@ -559,42 +609,11 @@ export async function POST(request: Request) {
     // ==================================================
 
     if (!githubUrl) {
-      let response;
-
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          response = await groq.chat.completions.create({
-            model: GROQ_MODEL,
-            messages: [
-              {
-                role: "user",
-                content: message,
-              },
-            ],
-            temperature: 0.4,
-            max_completion_tokens: 1024,
-          });
-
-          break;
-        } catch (error: unknown) {
-          console.error(
-            `Groq attempt ${attempt} failed:`,
-            error
-          );
-
-          if (attempt === 3) {
-            throw error;
-          }
-
-          await new Promise((resolve) =>
-            setTimeout(resolve, attempt * 1000)
-          );
-        }
-      }
+      const reply = await groqChat(message);
 
       return NextResponse.json({
         reply:
-          response?.choices?.[0]?.message?.content ||
+          reply ||
           "I couldn't generate a response.",
       });
     }
@@ -690,7 +709,7 @@ export async function POST(request: Request) {
     const analysisPrompt = `
 You are RepoSheriff, a GitHub repository intelligence tool.
 
-Analyze ONLY this repository:
+Analyze ONLY this repository.
 
 Repository:
 ${repoData.full_name}
@@ -730,6 +749,8 @@ IMPORTANT RULES:
 6. Return ONLY valid JSON.
 7. Do not use markdown.
 8. Do not put JSON inside code fences.
+9. Keep the summary concise.
+10. Keep strengths and improvements practical.
 
 Return EXACTLY this structure:
 
@@ -760,63 +781,30 @@ Return EXACTLY this structure:
 }
 
 Rules for score:
+
 - score must be a number from 0 to 100.
 - Each check must be exactly "Passed" or "Warning".
 - technologies must remain based on the detected repository technologies.
 `;
 
-    let response;
-
     // ==================================================
-    // 10. GROQ RETRY
+    // 10. GROQ ANALYSIS
     // ==================================================
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        response = await groq.chat.completions.create({
-          model: GROQ_MODEL,
-          messages: [
-            {
-              role: "system",
-              content:
-                "Return only valid JSON. Do not use markdown or code fences.",
-            },
-            {
-              role: "user",
-              content: analysisPrompt,
-            },
-          ],
-          temperature: 0.2,
-          max_completion_tokens: 2048,
-          response_format: {
-            type: "json_object",
-          },
-        });
+    const responseText =
+      await groqChat(analysisPrompt);
 
-        break;
-      } catch (error: unknown) {
-        console.error(
-          `Groq attempt ${attempt} failed:`,
-          error
-        );
-
-        if (attempt === 3) {
-          throw error;
-        }
-
-        await new Promise((resolve) =>
-          setTimeout(resolve, attempt * 1000)
-        );
-      }
+    if (!responseText) {
+      throw new Error(
+        "Groq returned an empty response."
+      );
     }
 
     // ==================================================
-    // 11. RETURN RESULT
+    // 11. CLEAN RESPONSE
     // ==================================================
 
-    let reply =
-      response?.choices?.[0]?.message?.content ||
-      "";
+    let reply = responseText.trim();
 
     reply = reply
       .replace(/^```json\s*/i, "")
@@ -824,23 +812,71 @@ Rules for score:
       .replace(/\s*```$/i, "")
       .trim();
 
-    // Make sure response is valid JSON.
+    // ==================================================
+    // 12. VALIDATE JSON
+    // ==================================================
+
     try {
-      const parsed: ScanResult =
-        JSON.parse(reply);
+      const parsed =
+        JSON.parse(reply) as ScanResult;
 
       // Force actual detected technologies.
       parsed.technologies =
         technologies;
 
+      // Make sure score is valid.
+      if (
+        typeof parsed.score !== "number"
+      ) {
+        parsed.score = 0;
+      }
+
+      parsed.score = Math.max(
+        0,
+        Math.min(100, parsed.score)
+      );
+
+      // Make sure required fields exist.
+      parsed.repoName =
+        parsed.repoName ||
+        repoData.full_name;
+
+      parsed.summary =
+        parsed.summary ||
+        "Repository analysis completed.";
+
+      parsed.projectDescription =
+        parsed.projectDescription ||
+        repoData.description ||
+        "No project description available.";
+
+      parsed.strengths =
+        Array.isArray(parsed.strengths)
+          ? parsed.strengths
+          : [];
+
+      parsed.improvements =
+        Array.isArray(parsed.improvements)
+          ? parsed.improvements
+          : [];
+
+      // ==================================================
+      // RETURN RESULT
+      // ==================================================
+
       return NextResponse.json({
         reply: JSON.stringify(parsed),
         technologies,
       });
-    } catch {
+    } catch (parseError) {
       console.error(
         "Groq returned invalid JSON:",
         reply
+      );
+
+      console.error(
+        "JSON parse error:",
+        parseError
       );
 
       return NextResponse.json(

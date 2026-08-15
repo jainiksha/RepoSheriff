@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
+import Scene3D from "@/components/Scene3D";
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function Home() {
 
   return (
     <main className={styles.page}>
+      <Scene3D />
 
       {/* NAVBAR */}
       <nav className={styles.navbar}>
@@ -70,91 +72,6 @@ export default function Home() {
             finds what is healthy, what needs attention,
             and what you should fix next.
           </p>
-
-          <div
-            id="scanner"
-            className={styles.scanner}
-          >
-
-            <input
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="github.com/owner/repository"
-            />
-
-            <button onClick={handleScan}>
-              Scan →
-            </button>
-
-          </div>
-
-          <p className={styles.scannerNote}>
-            Public repositories · No setup required
-          </p>
-
-        </div>
-
-
-        {/* SHERIFF REPORT */}
-        <div className={styles.report}>
-
-          <div className={styles.reportHeader}>
-
-            <div>
-              <small>SHERIFF&apos;S REPORT</small>
-
-              <h2>Repository Health</h2>
-
-              <p>github.com/example/project</p>
-            </div>
-
-            <span>PUBLIC</span>
-
-          </div>
-
-
-          <div className={styles.score}>
-
-            <strong>82</strong>
-
-            <div>
-              <span>/100</span>
-              <small>OVERALL HEALTH</small>
-              <b>GOOD</b>
-            </div>
-
-          </div>
-
-
-          <Metric name="Documentation" value={92} />
-          <Metric name="Code Quality" value={78} />
-          <Metric name="Security" value={84} />
-          <Metric name="Activity" value={89} />
-
-
-          <div className={styles.findings}>
-
-            <h3>
-              <span>!</span>
-              3 things need attention
-            </h3>
-
-            <p>
-              <b>01</b>
-              README needs installation instructions
-            </p>
-
-            <p>
-              <b>02</b>
-              4 issues have gone stale
-            </p>
-
-            <p>
-              <b>03</b>
-              No contributing guide found
-            </p>
-
-          </div>
 
         </div>
 

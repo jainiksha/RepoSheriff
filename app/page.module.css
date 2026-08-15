@@ -19,7 +19,11 @@
 
   --border: #e9e2cf;
 
+  position: relative;
   min-height: 100vh;
+
+  overflow: hidden;
+
   background: var(--cream);
   color: var(--text);
 }
@@ -67,13 +71,19 @@
   gap: 30px;
 }
 
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
 .navLinks a {
   color: var(--black);
-
   text-decoration: none;
-
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .navLinks a:hover {
