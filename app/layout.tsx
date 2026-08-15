@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import WizardBot from "@/components/WizardBot";
 
@@ -15,11 +16,12 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "RepoSheriff",
-  description: "GitHub Repository Intelligence",
+  description: "Repository intelligence",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  return (
+ return (
+  <ClerkProvider>
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
@@ -29,5 +31,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <WizardBot />
       </body>
     </html>
+  </ClerkProvider>
   );
 }
