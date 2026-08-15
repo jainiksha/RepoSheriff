@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 type ScanResult = {
@@ -21,9 +21,39 @@ export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [repositoryAnalyzed, setRepositoryAnalyzed] = useState(false);
+
+  // Important for preventing hydration mismatch
+  const [mounted, setMounted] = useState(false);
+
+  /*
+   * Read sessionStorage only after the component
+   * has mounted in the browser.
+   */
+  useEffect(() => {
+    setMounted(true);
+
+    const savedScan = sessionStorage.getItem("reposheriff-scan");
+
+    if (savedScan) {
+      try {
+        const parsed = JSON.parse(savedScan) as ScanResult;
+
+        setScanResult(parsed);
+        setRepositoryAnalyzed(true);
+      } catch (error) {
+        console.error("Could not load saved scan:", error);
+
+        sessionStorage.removeItem("reposheriff-scan");
+      }
+    }
+  }, []);
 
   const handleScan = async () => {
-    if (!repoUrl.trim()) return;
+    if (!repoUrl.trim()) {
+      alert("Please enter a GitHub repository URL.");
+      return;
+    }
 
     setIsScanning(true);
 
@@ -75,6 +105,9 @@ Rules:
 
       let parsed: ScanResult | null = null;
 
+      /*
+       * Try to parse AI reply
+       */
       if (typeof data?.reply === "string") {
         let reply = data.reply.trim();
 
@@ -102,10 +135,16 @@ Rules:
         }
       }
 
+      /*
+       * Fallback if API directly returns ScanResult
+       */
       if (!parsed && data?.repoName) {
         parsed = data as ScanResult;
       }
 
+      /*
+       * Could not parse response
+       */
       if (!parsed) {
         console.error("Could not parse scan result:", data);
 
@@ -116,26 +155,58 @@ Rules:
         return;
       }
 
-      setScanResult({
+      /*
+       * Build a clean result
+       */
+      const result: ScanResult = {
         repoName:
           parsed.repoName ||
-          cleanUrl.replace("https://github.com/", "").replace(/\/$/, ""),
+          cleanUrl
+            .replace("https://github.com/", "")
+            .replace("http://github.com/", "")
+            .replace(/\/$/, ""),
+
         score:
           typeof parsed.score === "number"
             ? Math.max(0, Math.min(100, parsed.score))
             : null,
-        summary: parsed.summary || "Repository analysis completed.",
+
+        summary:
+          parsed.summary || "Repository analysis completed.",
+
         checks: {
           README: parsed.checks?.README || "Warning",
-          License: parsed.checks?.License || "Warning",
+
+          License:
+            parsed.checks?.License || "Warning",
+
           "Recent activity":
             parsed.checks?.["Recent activity"] || "Warning",
-          Description: parsed.checks?.Description || "Warning",
-          "Open issues": parsed.checks?.["Open issues"] || "Warning",
+
+          Description:
+            parsed.checks?.Description || "Warning",
+
+          "Open issues":
+            parsed.checks?.["Open issues"] || "Warning",
+
           "Community health":
             parsed.checks?.["Community health"] || "Warning",
         },
-      });
+      };
+
+      /*
+       * Update UI
+       */
+      setScanResult(result);
+      setRepositoryAnalyzed(true);
+
+      /*
+       * Save result for Health / Summary / Issues pages
+       */
+      sessionStorage.setItem(
+        "reposheriff-scan",
+        JSON.stringify(result)
+      );
 
       alert("Scan completed!");
     } catch (error) {
@@ -151,6 +222,9 @@ Rules:
     }
   };
 
+  /*
+   * Repository name shown in dashboard
+   */
   const displayedRepo =
     scanResult?.repoName ||
     (repoUrl
@@ -160,6 +234,9 @@ Rules:
           .replace(/\/$/, "")
       : "facebook / react");
 
+  /*
+   * Default score for preview
+   */
   const score = scanResult?.score ?? 92;
 
   const healthLabel =
@@ -179,7 +256,9 @@ Rules:
   return (
     <main className="min-h-screen bg-[#fffdf5] text-[#111111] transition-colors duration-300 dark:bg-[#111111] dark:text-white">
 
-      {/* Navigation */}
+      {/* =====================================================
+          Navigation
+      ====================================================== */}
       <nav className="border-b border-[#e9e2cf] bg-[#ffc515]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
 
@@ -198,17 +277,68 @@ Rules:
 
           {/* Navigation links */}
           <div className="hidden items-center gap-8 text-sm font-bold text-[#111111] md:flex">
+
+            {/* How it works */}
             <span className="cursor-pointer hover:underline">
               How it works
             </span>
 
-            <span className="cursor-pointer hover:underline">
-              Features
+            {/* Repository Health */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/health";
+              }}
+            >
+              Repository Health
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+            {/* Project Summary */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/summary";
+              }}
+            >
+              Project Summary
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
+            {/* Issue Suggestions */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/issues";
+              }}
+            >
+              Issue Suggestions
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
+            {/* About */}
             <span className="cursor-pointer hover:underline">
               About
             </span>
+
           </div>
 
           {/* Actions */}
@@ -218,7 +348,10 @@ Rules:
             <ThemeToggle />
 
             {/* GitHub */}
-            <button className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]">
+            <button
+              type="button"
+              className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]"
+            >
               GitHub
             </button>
 
@@ -227,16 +360,20 @@ Rules:
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* =====================================================
+          Hero
+      ====================================================== */}
       <section className="mx-auto max-w-6xl px-6 pb-20 pt-24">
 
         <div className="mx-auto max-w-3xl text-center">
 
+          {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e9d99d] bg-[#fff3c4] px-4 py-2 text-sm text-[#8d6d00]">
             <span className="h-2 w-2 rounded-full bg-[#ffc515]" />
             Open-source repository intelligence
           </div>
 
+          {/* Heading */}
           <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
             Know the health of
             <span className="text-[#b28700]">
@@ -244,6 +381,7 @@ Rules:
             </span>
           </h1>
 
+          {/* Description */}
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#6b685f] dark:text-gray-300">
             RepoSheriff analyzes GitHub repositories, scores their health,
             finds problems, and tells contributors exactly what to improve.
@@ -257,11 +395,17 @@ Rules:
               <input
                 value={repoUrl}
                 onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleScan();
+                  }
+                }}
                 placeholder="https://github.com/owner/repository"
                 className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
               />
 
               <button
+                type="button"
                 onClick={handleScan}
                 disabled={isScanning}
                 className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
@@ -281,12 +425,14 @@ Rules:
 
       </section>
 
-      {/* Preview */}
+      {/* =====================================================
+          Repository Preview
+      ====================================================== */}
       <section className="mx-auto max-w-6xl px-6 pb-24">
 
         <div className="overflow-hidden rounded-3xl border border-[#e9e2cf] bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
 
-          {/* Dashboard header */}
+          {/* Dashboard Header */}
           <div className="flex items-center justify-between border-b border-[#e9e2cf] px-6 py-5 dark:border-gray-700">
 
             <div>
@@ -305,6 +451,7 @@ Rules:
 
           </div>
 
+          {/* Dashboard Content */}
           <div className="grid gap-6 p-6 md:grid-cols-3">
 
             {/* Score */}
@@ -330,7 +477,9 @@ Rules:
 
                 <div
                   className="h-full rounded-full bg-[#ffc515]"
-                  style={{ width: `${score}%` }}
+                  style={{
+                    width: `${score}%`,
+                  }}
                 />
 
               </div>
@@ -402,7 +551,9 @@ Rules:
 
       </section>
 
-      {/* Features */}
+      {/* =====================================================
+          Features
+      ====================================================== */}
       <section className="border-t border-[#e9e2cf] bg-white dark:border-gray-700 dark:bg-[#111111]">
 
         <div className="mx-auto max-w-6xl px-6 py-20">
@@ -445,7 +596,9 @@ Rules:
 
       </section>
 
-      {/* Footer */}
+      {/* =====================================================
+          Footer
+      ====================================================== */}
       <footer className="border-t border-[#e9e2cf] bg-[#ffc515] px-6 py-8 text-center text-sm text-[#5f531f]">
         RepoSheriff — GitHub repository health & contributor intelligence
       </footer>
@@ -453,6 +606,10 @@ Rules:
     </main>
   );
 }
+
+/* =========================================================
+   Check Component
+========================================================= */
 
 function Check({
   name,
@@ -483,6 +640,10 @@ function Check({
     </div>
   );
 }
+
+/* =========================================================
+   Feature Component
+========================================================= */
 
 function Feature({
   number,
