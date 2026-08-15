@@ -337,9 +337,12 @@ Rules:
             </span>
 
             {/* About */}
-            <span className="cursor-pointer hover:underline">
+            <a
+              href="/dashboard/about"
+              className="cursor-pointer hover:underline"
+            >
               About
-            </span>
+            </a>
 
           </div>
 
