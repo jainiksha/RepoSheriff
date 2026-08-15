@@ -16,10 +16,12 @@ export default function Home() {
       {/* Navigation */}
       <nav className="border-b border-white/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-400 font-bold text-black">
-              R
-            </div>
+          <div className="flex items-center gap 0.1">
+            <img
+              src="/reposheriff-logo.png"
+              alt="RepoSheriff logo"
+              className="h-20 w-35 object-contain"
+            />
 
             <span className="text-xl font-bold tracking-tight">
               RepoSheriff
