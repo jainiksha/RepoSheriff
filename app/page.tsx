@@ -101,7 +101,7 @@ export default function Home() {
           <div className={styles.reportHeader}>
 
             <div>
-              <small>SHERIFF'S REPORT</small>
+              <small>SHERIFF&apos;S REPORT</small>
 
               <h2>Repository Health</h2>
 
@@ -268,7 +268,7 @@ export default function Home() {
           <h2>
             Three steps.
             <br />
-            That's it.
+            That&apos;s it.
           </h2>
 
         </div>
@@ -310,7 +310,7 @@ export default function Home() {
         <small>REPOSITORY INTELLIGENCE</small>
 
         <h2>
-          Don't just clone it.
+          Don&apos;t just clone it.
           <br />
           <i>Understand it.</i>
         </h2>
