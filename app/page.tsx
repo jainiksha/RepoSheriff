@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import WizardBot from "@/components/WizardBot";
 
 type CheckResult = {
   name: string;
@@ -407,6 +408,7 @@ export default function Home() {
       <footer className="border-t border-white/10 px-6 py-8 text-center text-sm text-gray-600">
         RepoSheriff — GitHub repository health & contributor intelligence
       </footer>
+            <WizardBot />
     </main>
   );
 }
