@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { UserButton } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
 
+type InterviewQuestion = {
+  question: string;
+  answer: string;
+};
+
+type InterviewQuestions = {
+  easy: InterviewQuestion[];
+  medium: InterviewQuestion[];
+  advanced: InterviewQuestion[];
+  critical: InterviewQuestion[];
+};
+
 type ScanResult = {
   repoName: string;
   score: number | null;
@@ -104,6 +116,48 @@ Rules:
       }
 
       console.log("Scan result:", data);
+
+      // Save the AI-generated interview questions for
+      // /dashboard/interview.
+      if (data?.interviewQuestions) {
+        try {
+          const interviewData =
+            data.interviewQuestions as InterviewQuestions;
+
+          const validInterviewData =
+            Array.isArray(interviewData.easy) &&
+            interviewData.easy.length === 10 &&
+            Array.isArray(interviewData.medium) &&
+            interviewData.medium.length === 10 &&
+            Array.isArray(interviewData.advanced) &&
+            interviewData.advanced.length === 10 &&
+            Array.isArray(interviewData.critical) &&
+            interviewData.critical.length === 10;
+
+          if (validInterviewData) {
+            sessionStorage.setItem(
+              "reposheriff-interview",
+              JSON.stringify(interviewData)
+            );
+          } else {
+            console.warn(
+              "Interview data did not contain exactly 10 questions per level."
+            );
+            sessionStorage.removeItem("reposheriff-interview");
+          }
+        } catch (error) {
+          console.error(
+            "Could not save interview questions:",
+            error
+          );
+          sessionStorage.removeItem("reposheriff-interview");
+        }
+      } else {
+        console.warn(
+          "API response did not contain interviewQuestions."
+        );
+        sessionStorage.removeItem("reposheriff-interview");
+      }
 
       let parsed: ScanResult | null = null;
 
@@ -331,10 +385,28 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+            {/* Interview */}
+              <span
+                className={
+                  mounted && repositoryAnalyzed
+                    ? "cursor-pointer hover:underline"
+                    : "cursor-not-allowed opacity-50"
+                }
+                onClick={() => {
+                  if (!mounted || !repositoryAnalyzed) return;
+
+                  window.location.href = "/dashboard/interview";
+                }}
+              >
+                Interview Question
+                {(!mounted || !repositoryAnalyzed) && " 🔒"}
+              </span>
+
             {/* About */}
             <span className="cursor-pointer hover:underline">
               About
             </span>
+            
 
           </div>
 

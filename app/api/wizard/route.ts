@@ -113,6 +113,18 @@ type GitHubContent = {
   download_url?: string | null;
 };
 
+type InterviewQuestion = {
+  question: string;
+  answer: string;
+};
+
+type InterviewQuestions = {
+  easy: InterviewQuestion[];
+  medium: InterviewQuestion[];
+  advanced: InterviewQuestion[];
+  critical: InterviewQuestion[];
+};
+
 type ScanResult = {
   repoName: string;
 
@@ -142,6 +154,255 @@ type ScanResult = {
     "Community health": "Passed" | "Warning";
   };
 };
+
+// ======================================================
+// GENERATE INTERVIEW QUESTIONS
+// ======================================================
+
+async function generateInterviewQuestions(
+  repositoryContext: string
+): Promise<InterviewQuestions> {
+  const prompt = `
+You are RepoSheriff's AI technical interviewer.
+
+Your job is to create interview preparation material
+for the GitHub repository described below.
+
+IMPORTANT:
+Use ONLY the repository information provided in this prompt.
+
+Do not invent technologies.
+Do not assume frameworks that are not mentioned.
+Do not create questions unrelated to this repository.
+
+==================================================
+REPOSITORY INFORMATION
+==================================================
+
+${repositoryContext}
+
+==================================================
+TASK
+==================================================
+
+Generate exactly 40 interview question-answer pairs.
+
+Divide them into exactly four difficulty levels:
+
+EASY:
+10 questions
+
+MEDIUM:
+10 questions
+
+ADVANCED:
+10 questions
+
+CRITICAL:
+10 questions
+
+==================================================
+EASY QUESTIONS
+==================================================
+
+Focus on basic repository understanding:
+
+- project purpose
+- problem solved
+- main features
+- technologies
+- programming languages
+- basic functionality
+- target users
+- important repository files
+
+==================================================
+MEDIUM QUESTIONS
+==================================================
+
+Focus on implementation:
+
+- APIs
+- components
+- libraries
+- data flow
+- frontend/backend communication
+- repository structure
+- technical implementation
+- authentication
+- configuration
+
+==================================================
+ADVANCED QUESTIONS
+==================================================
+
+Focus on deeper engineering:
+
+- architecture
+- scalability
+- performance
+- error handling
+- maintainability
+- system design
+- API design
+- deployment
+- data management
+
+==================================================
+CRITICAL QUESTIONS
+==================================================
+
+Focus on challenging interviewer-level questions:
+
+- security
+- scalability
+- production problems
+- failure scenarios
+- API rate limits
+- performance bottlenecks
+- architecture redesign
+- cost optimization
+- large-scale usage
+- difficult technical decisions
+
+==================================================
+ANSWER REQUIREMENTS
+==================================================
+
+Every question MUST have an answer.
+
+Answers should:
+- be technically accurate
+- be understandable
+- be specific to this repository
+- explain reasoning where appropriate
+- avoid unnecessary information
+
+Do not make answers extremely short.
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+Return ONLY valid JSON.
+
+Use exactly this structure:
+
+{
+  "easy": [
+    {
+      "question": "Question",
+      "answer": "Answer"
+    }
+  ],
+  "medium": [
+    {
+      "question": "Question",
+      "answer": "Answer"
+    }
+  ],
+  "advanced": [
+    {
+      "question": "Question",
+      "answer": "Answer"
+    }
+  ],
+  "critical": [
+    {
+      "question": "Question",
+      "answer": "Answer"
+    }
+  ]
+}
+
+Rules:
+- easy MUST contain exactly 10 objects.
+- medium MUST contain exactly 10 objects.
+- advanced MUST contain exactly 10 objects.
+- critical MUST contain exactly 10 objects.
+- Do not add another category.
+- Do not remove any category.
+- Do not use markdown.
+- Do not use code fences.
+- Return JSON only.
+`;
+
+  const response = await groqChat(prompt, true);
+
+  let cleaned = response.trim();
+
+  cleaned = cleaned
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+
+  if (firstBrace === -1 || lastBrace === -1) {
+    throw new Error("AI did not return valid interview JSON.");
+  }
+
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(cleaned.slice(firstBrace, lastBrace + 1));
+  } catch {
+    throw new Error("AI returned malformed interview JSON.");
+  }
+
+  if (
+    typeof parsed !== "object" ||
+    parsed === null ||
+    !Array.isArray((parsed as Record<string, unknown>).easy) ||
+    !Array.isArray((parsed as Record<string, unknown>).medium) ||
+    !Array.isArray((parsed as Record<string, unknown>).advanced) ||
+    !Array.isArray((parsed as Record<string, unknown>).critical)
+  ) {
+    throw new Error(
+      "Interview response is missing required sections."
+    );
+  }
+
+  const result = parsed as InterviewQuestions;
+
+  if (
+    result.easy.length !== 10 ||
+    result.medium.length !== 10 ||
+    result.advanced.length !== 10 ||
+    result.critical.length !== 10
+  ) {
+    throw new Error(
+      "AI did not generate exactly 10 questions for every level."
+    );
+  }
+
+  const sections: Array<keyof InterviewQuestions> = [
+    "easy",
+    "medium",
+    "advanced",
+    "critical",
+  ];
+
+  for (const section of sections) {
+    for (const item of result[section]) {
+      if (
+        !item ||
+        typeof item.question !== "string" ||
+        typeof item.answer !== "string" ||
+        !item.question.trim() ||
+        !item.answer.trim()
+      ) {
+        throw new Error(
+          `Invalid question-answer pair in ${section} section.`
+        );
+      }
+    }
+  }
+
+  return result;
+}
 
 // ======================================================
 // GITHUB API HELPER
@@ -633,12 +894,148 @@ function extractUrlFromMessage(
 
 export async function POST(request: Request) {
   try {
-    const { message } = await request.json();
+    const body = await request.json();
 
-    if (
-      !message ||
-      typeof message !== "string"
-    ) {
+    const message =
+      typeof body?.message === "string"
+        ? body.message
+        : "";
+
+    const mode =
+      typeof body?.mode === "string"
+        ? body.mode
+        : "";
+
+    const repositoryInput =
+      typeof body?.repository === "string"
+        ? body.repository.trim()
+        : "";
+
+    // ==================================================
+    // INTERVIEW MODE
+    // ==================================================
+    // The interview page can request questions directly.
+    // It may send either a full GitHub URL or owner/repository.
+    // We rebuild the repository context here so the questions
+    // are based on the actual scanned repository.
+
+    if (mode === "interview") {
+      let githubUrl = repositoryInput;
+
+      if (
+        githubUrl &&
+        !/^https?:\/\/\S+/i.test(githubUrl)
+      ) {
+        githubUrl = `https://github.com/${githubUrl.replace(/^\/+|\/+$/g, "")}`;
+      }
+
+      if (!githubUrl) {
+        githubUrl = extractUrlFromMessage(message) || "";
+      }
+
+      const repository =
+        extractGitHubRepository(githubUrl);
+
+      if (!repository) {
+        return NextResponse.json(
+          {
+            error:
+              "A valid GitHub repository URL or owner/repository is required for the interview.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const { owner, repo } = repository;
+
+      console.log(
+        `Generating interview for GitHub repository: ${owner}/${repo}`
+      );
+
+      // Get repository information.
+      const repoData =
+        await githubFetch<GitHubRepo>(
+          `https://api.github.com/repos/${owner}/${repo}`
+        );
+
+      // Get languages.
+      const languages =
+        await githubFetch<GitHubLanguages>(
+          `https://api.github.com/repos/${owner}/${repo}/languages`
+        );
+
+      // Get root files.
+      const rootFiles =
+        await githubFetch<GitHubContent[]>(
+          `https://api.github.com/repos/${owner}/${repo}/contents?ref=${encodeURIComponent(
+            repoData.default_branch
+          )}`
+        );
+
+      // Get important configuration files.
+      const importantFiles =
+        await getImportantFiles(
+          owner,
+          repo,
+          repoData.default_branch,
+          rootFiles
+        );
+
+      // Detect the actual technologies.
+      const technologies =
+        detectTechnologies(
+          languages,
+          importantFiles
+        );
+
+      const repositoryContext = `
+Repository:
+${repoData.full_name}
+
+Description:
+${repoData.description || "No description provided"}
+
+Primary language:
+${repoData.language || "Unknown"}
+
+Default branch:
+${repoData.default_branch}
+
+GitHub languages:
+${JSON.stringify(languages, null, 2)}
+
+Detected technologies:
+${JSON.stringify(technologies, null, 2)}
+
+Repository statistics:
+- Stars: ${repoData.stargazers_count}
+- Forks: ${repoData.forks_count}
+- Open issues: ${repoData.open_issues_count}
+
+Important repository files and their contents:
+${JSON.stringify(importantFiles, null, 2)}
+`;
+
+      const interviewQuestions =
+        await generateInterviewQuestions(
+          repositoryContext
+        );
+
+      return NextResponse.json({
+        success: true,
+        repoName: repoData.full_name,
+        technologies,
+        interviewQuestions,
+      });
+    }
+
+    // ==================================================
+    // NORMAL WIZARD / SCAN MODE
+    // ==================================================
+
+    if (!message) {
       return NextResponse.json(
         {
           error: "Message is required.",
@@ -760,7 +1157,60 @@ export async function POST(request: Request) {
     );
 
     // ==================================================
-    // 9. ASK GROQ TO ANALYZE REPOSITORY
+    // 9. BUILD REPOSITORY CONTEXT FOR INTERVIEW AI
+    // ==================================================
+
+    const repositoryContext = `
+Repository:
+${repoData.full_name}
+
+Description:
+${repoData.description || "No description provided"}
+
+Primary language:
+${repoData.language || "Unknown"}
+
+Default branch:
+${repoData.default_branch}
+
+GitHub languages:
+${JSON.stringify(
+  languages,
+  null,
+  2
+)}
+
+Detected technologies:
+${JSON.stringify(
+  technologies,
+  null,
+  2
+)}
+
+Repository statistics:
+- Stars: ${repoData.stargazers_count}
+- Forks: ${repoData.forks_count}
+- Open issues: ${repoData.open_issues_count}
+
+Important repository files and their contents:
+${JSON.stringify(
+  importantFiles,
+  null,
+  2
+)}
+`;
+
+    // ==================================================
+    // 10. GENERATE 40 INTERVIEW QUESTIONS
+    // ==================================================
+
+    const interviewQuestions =
+      await generateInterviewQuestions(
+        repositoryContext
+      );
+
+    // ==================================================
+    // 11. ASK GROQ TO ANALYZE REPOSITORY
     // ==================================================
 
     const analysisPrompt = `
@@ -938,6 +1388,8 @@ Rules for score:
         reply: JSON.stringify(parsed),
 
         technologies,
+
+        interviewQuestions,
       });
     } catch (parseError) {
       console.error(
