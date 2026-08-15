@@ -6,37 +6,59 @@ import { NextResponse } from "next/server";
 
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
-async function groqChat(prompt: string): Promise<string> {
+async function groqChat(
+  prompt: string,
+  jsonMode: boolean = false
+): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
 
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not configured.");
   }
 
+  // For JSON responses, explicitly tell Groq to return JSON.
+  // Normal Wizard chat does not use JSON response mode.
+  const finalPrompt = jsonMode
+    ? `${prompt}
+
+IMPORTANT:
+Return the response as valid JSON only.
+Use JSON format.
+Do not use markdown.
+Do not use code fences.`
+    : prompt;
+
+  const requestBody: Record<string, unknown> = {
+    model: GROQ_MODEL,
+
+    messages: [
+      {
+        role: "user",
+        content: finalPrompt,
+      },
+    ],
+
+    temperature: 0.2,
+  };
+
+  // Only enable Groq's JSON response format when needed.
+  if (jsonMode) {
+    requestBody.response_format = {
+      type: "json_object",
+    };
+  }
+
   const response = await fetch(
     "https://api.groq.com/openai/v1/chat/completions",
     {
       method: "POST",
+
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
 
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-
-        temperature: 0.2,
-
-        response_format: {
-          type: "json_object",
-        },
-      }),
+      body: JSON.stringify(requestBody),
     }
   );
 
@@ -54,8 +76,6 @@ async function groqChat(prompt: string): Promise<string> {
   return data?.choices?.[0]?.message?.content || "";
 }
 
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-
 // ======================================================
 // TYPES
 // ======================================================
@@ -63,14 +83,21 @@ const GROQ_MODEL = "llama-3.3-70b-versatile";
 type GitHubRepo = {
   full_name: string;
   name: string;
+
   owner: {
     login: string;
   };
+
   description: string | null;
+
   default_branch: string;
+
   stargazers_count: number;
+
   forks_count: number;
+
   open_issues_count: number;
+
   language: string | null;
 };
 
@@ -78,26 +105,40 @@ type GitHubLanguages = Record<string, number>;
 
 type GitHubContent = {
   name: string;
+
   path: string;
+
   type: string;
+
   download_url?: string | null;
 };
 
 type ScanResult = {
   repoName: string;
+
   score: number;
+
   summary: string;
+
   projectDescription: string;
+
   technologies: string[];
+
   strengths: string[];
+
   improvements: string[];
 
   checks: {
     README: "Passed" | "Warning";
+
     License: "Passed" | "Warning";
+
     "Recent activity": "Passed" | "Warning";
+
     Description: "Passed" | "Warning";
+
     "Open issues": "Passed" | "Warning";
+
     "Community health": "Passed" | "Warning";
   };
 };
@@ -109,6 +150,7 @@ type ScanResult = {
 async function githubFetch<T>(url: string): Promise<T> {
   const headers: HeadersInit = {
     Accept: "application/vnd.github+json",
+
     "X-GitHub-Api-Version": "2022-11-28",
   };
 
@@ -121,6 +163,7 @@ async function githubFetch<T>(url: string): Promise<T> {
 
   const response = await fetch(url, {
     headers,
+
     cache: "no-store",
   });
 
@@ -141,7 +184,10 @@ async function githubFetch<T>(url: string): Promise<T> {
 
 function extractGitHubRepository(
   url: string
-): { owner: string; repo: string } | null {
+): {
+  owner: string;
+  repo: string;
+} | null {
   try {
     const parsed = new URL(url);
 
@@ -161,6 +207,7 @@ function extractGitHubRepository(
     }
 
     const owner = parts[0];
+
     const repo = parts[1].replace(/\.git$/, "");
 
     if (!owner || !repo) {
@@ -473,11 +520,13 @@ function detectTechnologies(
 
   if (files["pom.xml"]) {
     technologies.add("Java");
+
     technologies.add("Maven");
   }
 
   if (files["build.gradle"]) {
     technologies.add("Java");
+
     technologies.add("Gradle");
   }
 
@@ -487,6 +536,7 @@ function detectTechnologies(
 
   if (files["build.gradle.kts"]) {
     technologies.add("Kotlin");
+
     technologies.add("Gradle");
   }
 
@@ -496,6 +546,7 @@ function detectTechnologies(
 
   if (files["Cargo.toml"]) {
     technologies.add("Rust");
+
     technologies.add("Cargo");
   }
 
@@ -513,6 +564,7 @@ function detectTechnologies(
 
   if (files["composer.json"]) {
     technologies.add("PHP");
+
     technologies.add("Composer");
   }
 
@@ -609,7 +661,12 @@ export async function POST(request: Request) {
     // ==================================================
 
     if (!githubUrl) {
-      const reply = await groqChat(message);
+      // IMPORTANT:
+      // Normal chat does NOT use JSON mode.
+      const reply = await groqChat(
+        message,
+        false
+      );
 
       return NextResponse.json({
         reply:
@@ -791,8 +848,13 @@ Rules for score:
     // 10. GROQ ANALYSIS
     // ==================================================
 
+    // IMPORTANT:
+    // Repository analysis DOES need JSON mode.
     const responseText =
-      await groqChat(analysisPrompt);
+      await groqChat(
+        analysisPrompt,
+        true
+      );
 
     if (!responseText) {
       throw new Error(
@@ -804,7 +866,8 @@ Rules for score:
     // 11. CLEAN RESPONSE
     // ==================================================
 
-    let reply = responseText.trim();
+    let reply =
+      responseText.trim();
 
     reply = reply
       .replace(/^```json\s*/i, "")
@@ -833,7 +896,10 @@ Rules for score:
 
       parsed.score = Math.max(
         0,
-        Math.min(100, parsed.score)
+        Math.min(
+          100,
+          parsed.score
+        )
       );
 
       // Make sure required fields exist.
@@ -851,12 +917,16 @@ Rules for score:
         "No project description available.";
 
       parsed.strengths =
-        Array.isArray(parsed.strengths)
+        Array.isArray(
+          parsed.strengths
+        )
           ? parsed.strengths
           : [];
 
       parsed.improvements =
-        Array.isArray(parsed.improvements)
+        Array.isArray(
+          parsed.improvements
+        )
           ? parsed.improvements
           : [];
 
@@ -866,6 +936,7 @@ Rules for score:
 
       return NextResponse.json({
         reply: JSON.stringify(parsed),
+
         technologies,
       });
     } catch (parseError) {
