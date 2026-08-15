@@ -369,9 +369,9 @@ Rules:
 
           {/* Heading */}
           <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
-            Know the health of
+            Your repo has secrets,
             <span className="text-[#b28700]">
-              {" "}any repo.
+              {" "}We find them.
             </span>
           </h1>
 
@@ -419,131 +419,7 @@ Rules:
 
       </section>
 
-      {/* =====================================================
-          Repository Preview
-      ====================================================== */}
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-
-        <div className="overflow-hidden rounded-3xl border border-[#e9e2cf] bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
-
-          {/* Dashboard Header */}
-          <div className="flex items-center justify-between border-b border-[#e9e2cf] px-6 py-5 dark:border-gray-700">
-
-            <div>
-              <p className="text-sm text-[#8b887e] dark:text-gray-400">
-                Repository health
-              </p>
-
-              <h2 className="mt-1 text-xl font-semibold text-[#111111] dark:text-white">
-                {displayedRepo}
-              </h2>
-            </div>
-
-            <div className="rounded-full bg-[#fff3c4] px-4 py-2 text-sm font-medium text-[#9a7400]">
-              {healthLabel}
-            </div>
-
-          </div>
-
-          {/* Dashboard Content */}
-          <div className="grid gap-6 p-6 md:grid-cols-3">
-
-            {/* Score */}
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 dark:border-gray-700 dark:bg-gray-800">
-
-              <p className="text-sm text-[#8b887e] dark:text-gray-400">
-                Health Score
-              </p>
-
-              <div className="mt-4 flex items-end gap-2">
-
-                <span className="text-6xl font-bold text-[#111111] dark:text-white">
-                  {score}
-                </span>
-
-                <span className="mb-2 text-[#8b887e] dark:text-gray-400">
-                  / 100
-                </span>
-
-              </div>
-
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#eee9dc] dark:bg-gray-700">
-
-                <div
-                  className="h-full rounded-full bg-[#ffc515]"
-                  style={{
-                    width: `${score}%`,
-                  }}
-                />
-
-              </div>
-
-              <p className="mt-3 text-sm text-[#b28700]">
-                {healthDescription}
-              </p>
-
-              {scanResult?.summary && (
-                <p className="mt-4 text-sm leading-6 text-[#6b685f] dark:text-gray-300">
-                  {scanResult.summary}
-                </p>
-              )}
-
-            </div>
-
-            {/* Checks */}
-            <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 dark:border-gray-700 dark:bg-gray-800 md:col-span-2">
-
-              <p className="mb-4 text-sm text-[#8b887e] dark:text-gray-400">
-                Repository checks
-              </p>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-
-                <Check
-                  name="README"
-                  status={scanResult?.checks.README || "Passed"}
-                />
-
-                <Check
-                  name="License"
-                  status={scanResult?.checks.License || "Passed"}
-                />
-
-                <Check
-                  name="Recent activity"
-                  status={
-                    scanResult?.checks["Recent activity"] || "Passed"
-                  }
-                />
-
-                <Check
-                  name="Description"
-                  status={scanResult?.checks.Description || "Passed"}
-                />
-
-                <Check
-                  name="Open issues"
-                  status={
-                    scanResult?.checks["Open issues"] || "Warning"
-                  }
-                />
-
-                <Check
-                  name="Community health"
-                  status={
-                    scanResult?.checks["Community health"] || "Passed"
-                  }
-                />
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
+      
 
       {/* =====================================================
           Features
