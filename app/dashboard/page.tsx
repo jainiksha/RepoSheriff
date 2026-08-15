@@ -280,11 +280,6 @@ Rules:
           {/* Navigation links */}
           <div className="hidden items-center gap-8 text-sm font-bold text-[#111111] md:flex">
 
-            {/* How it works */}
-            <span className="cursor-pointer hover:underline">
-              How it works
-            </span>
-
             {/* Repository Health */}
             <span
               className={
@@ -337,12 +332,9 @@ Rules:
             </span>
 
             {/* About */}
-            <a
-              href="/dashboard/about"
-              className="cursor-pointer hover:underline"
-            >
+            <span className="cursor-pointer hover:underline">
               About
-            </a>
+            </span>
 
           </div>
 
