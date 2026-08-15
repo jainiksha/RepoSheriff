@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { UserButton } from "@clerk/nextjs";
 import ThemeToggle from "@/components/ThemeToggle";
 
 type ScanResult = {
@@ -16,6 +17,7 @@ type ScanResult = {
     "Community health": "Passed" | "Warning";
   };
 };
+
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -341,21 +343,13 @@ Rules:
 
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          <button className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]">
+             GitHub
+          </button>
 
-            {/* Day / Night Toggle */}
-            <ThemeToggle />
+          <UserButton />
 
-            {/* GitHub */}
-            <button
-              type="button"
-              className="rounded-lg border border-[#111111] bg-[#111111] px-4 py-2 text-sm font-medium text-[#ffc515] transition hover:bg-[#292923]"
-            >
-              GitHub
-            </button>
-
-          </div>
+      
 
         </div>
       </nav>

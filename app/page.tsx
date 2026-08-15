@@ -41,7 +41,7 @@ export default function Home() {
 
         <button
           className={styles.navButton}
-          onClick={() => alert("Login coming soon!")}
+          onClick={() => router.push("/sign-in")}
         >
           Login
         </button>
