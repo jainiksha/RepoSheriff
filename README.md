@@ -553,110 +553,6 @@ The API routes are implemented inside the Next.js App Router under `app/api`.
 
 ---
 
-# ⚙️ Getting Started
-
-## Prerequisites
-
-Make sure you have installed:
-
-* Node.js
-* npm
-* Git
-* A GitHub account
-* Required API credentials for enabled AI/authentication features
-
----
-
-## 1. Clone the Repository
-
-```bash
-git clone https://github.com/jainiksha/RepoSheriff.git
-```
-
-Move into the project directory:
-
-```bash
-cd RepoSheriff
-```
-
----
-
-## 2. Install Dependencies
-
-```bash
-npm install
-```
-
-The project uses npm and includes a `package-lock.json` file for dependency consistency.
-
----
-
-## 3. Configure Environment Variables
-
-Create a `.env.local` file in the root directory:
-
-```env
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-
-# Google GenAI
-GOOGLE_API_KEY=your_google_api_key
-
-# Groq
-GROQ_API_KEY=your_groq_api_key
-```
-
-> **Important:** Never commit API keys or secrets to GitHub.
-
-Use the exact environment variable names expected by the current API implementations in your local branch.
-
----
-
-## 4. Start the Development Server
-
-```bash
-npm run dev
-```
-
-The application will normally be available at:
-
-```text
-http://localhost:3000
-```
-
----
-
-# 🏗️ Production Build
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-Start the production server:
-
-```bash
-npm run start
-```
-
-The repository defines these scripts in `package.json`.
-
----
-
-# 🧹 Linting
-
-Run ESLint with:
-
-```bash
-npm run lint
-```
-
-The project uses ESLint 9 and the Next.js ESLint configuration.
-
----
-
 # 🖥️ User Flow
 
 A typical user interaction looks like this:
@@ -890,9 +786,31 @@ If you discover a security vulnerability, please report it privately to the main
 
 # 📄 License
 
-Please refer to the repository's license configuration for the applicable license terms.
+This project is licensed under the **MIT License**.
+
+You are free to:
+
+* ✅ Use the software for personal or commercial purposes
+* ✅ Modify the source code
+* ✅ Distribute the software
+* ✅ Use the software privately
+
+The software is provided **"as is"**, without warranty of any kind.
+
+See the [LICENSE](LICENSE) file for the complete license text.
 
 ---
+
+### MIT License
+
+Copyright (c) 2026 Jainiksha Patel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files, to deal in the Software
+without restriction, including without limitation the rights to use, copy,
+modify, merge, publish, distribute, sublicense, and/or sell copies of the
+Software.
+
 
 # 👥 Contributors
 
