@@ -316,23 +316,23 @@ Rules:
           Navigation
       ====================================================== */}
       <nav className="border-b border-[#e9e2cf] bg-[#ffc515]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-4">
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <img
-              src="/reposheriff-logo.png"
-              alt="RepoSheriff logo"
-              className="h-16 w-28 object-contain"
-            />
+  <img
+    src="/reposheriff-logo.png"
+    alt="RepoSheriff logo"
+    className="h-12 w-16 object-contain"
+  />
 
-            <span className="text-xl font-bold tracking-tight text-[#111111]">
-              RepoSheriff
-            </span>
-          </div>
+  <span className="text-xl font-bold tracking-tight text-[#111111]">
+    RepoSheriff
+  </span>
+</div>
 
           {/* Navigation links */}
-          <div className="hidden items-center gap-8 text-sm font-bold text-[#111111] md:flex">
+          <div className="hidden items-center gap-6 whitespace-nowrap text-sm font-bold text-[#111111] md:flex">
 
             {/* Repository Health */}
             <span
@@ -385,6 +385,23 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+            {/* Documentation */}
+            <span
+              className={
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
+
+                window.location.href = "/dashboard/documentation";
+              }}
+            >
+              Documentation
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
+
             {/* Interview */}
               <span
                 className={
@@ -414,7 +431,12 @@ Rules:
               </span>
 
             {/* About */}
-            <span className="cursor-pointer hover:underline">
+            <span
+              className="cursor-pointer whitespace-nowrap hover:underline"
+              onClick={() => {
+                window.location.href = "/dashboard/about";
+              }}
+            >
               About
             </span>
             
@@ -455,37 +477,36 @@ Rules:
 
           {/* Scanner */}
           <div className="mx-auto mt-10 max-w-2xl">
+  <div className="flex flex-col gap-3 rounded-2xl border border-[#e9e2cf] bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900 md:flex-row">
 
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#e9e2cf] bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900 md:flex-row">
+    <input
+      type="text"
+      value={repoUrl}
+      onChange={(e) => setRepoUrl(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleScan();
+        }
+      }}
+      placeholder="https://github.com/owner/repository"
+      className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
+    />
 
-              <input
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleScan();
-                  }
-                }}
-                placeholder="https://github.com/owner/repository"
-                className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
-              />
+    <button
+      type="button"
+      onClick={handleScan}
+      disabled={isScanning}
+      className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {isScanning ? "Scanning..." : "Scan Repository"}
+    </button>
 
-              <button
-                type="button"
-                onClick={handleScan}
-                disabled={isScanning}
-                className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isScanning ? "Scanning..." : "Scan Repository"}
-              </button>
+  </div>
 
-            </div>
-
-            <p className="mt-3 text-xs text-[#8b887e] dark:text-gray-400">
-              No GitHub installation required. Paste a public repository URL.
-            </p>
-
-          </div>
+  <p className="mt-3 text-xs text-[#8b887e] dark:text-gray-400">
+    No GitHub installation required. Paste a public repository URL.
+  </p>
+</div>
 
         </div>
 
