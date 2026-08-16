@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import CursorSparkles from "@/components/CursorSparkles";
 import "./globals.css";
 import WizardBot from "@/components/WizardBot";
 
@@ -20,17 +21,18 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
- return (
-  <ClerkProvider>
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <WizardBot />
-      </body>
-    </html>
-  </ClerkProvider>
+  return (
+    <ClerkProvider>
+      <html
+        lang="en"
+        className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      >
+        <body className="min-h-full flex flex-col">
+          <CursorSparkles />
+          {children}
+          <WizardBot />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
