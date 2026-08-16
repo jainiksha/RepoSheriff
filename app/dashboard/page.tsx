@@ -402,6 +402,17 @@ Rules:
                 {(!mounted || !repositoryAnalyzed) && " 🔒"}
               </span>
 
+              {/* GitHub Tutorials */}
+
+              <span
+                className="cursor-pointer hover:underline"
+                onClick={() => {
+                  window.location.href = "/dashboard/tutorials";
+                }}
+              >
+                GitHub Tutorials
+              </span>
+
             {/* About */}
             <span className="cursor-pointer hover:underline">
               About
