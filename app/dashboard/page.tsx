@@ -30,7 +30,6 @@ type ScanResult = {
   };
 };
 
-
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
@@ -143,6 +142,7 @@ Rules:
             console.warn(
               "Interview data did not contain exactly 10 questions per level."
             );
+
             sessionStorage.removeItem("reposheriff-interview");
           }
         } catch (error) {
@@ -150,12 +150,14 @@ Rules:
             "Could not save interview questions:",
             error
           );
+
           sessionStorage.removeItem("reposheriff-interview");
         }
       } else {
         console.warn(
           "API response did not contain interviewQuestions."
         );
+
         sessionStorage.removeItem("reposheriff-interview");
       }
 
@@ -310,37 +312,95 @@ Rules:
         : "Repository needs significant improvement";
 
   return (
-    <main className="min-h-screen bg-[#fffdf5] text-[#111111] transition-colors duration-300 dark:bg-[#111111] dark:text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#fffdf5] text-[#111111] transition-colors duration-300 dark:bg-[#111111] dark:text-white">
 
       {/* =====================================================
           Navigation
       ====================================================== */}
+
       <nav className="border-b border-[#e9e2cf] bg-[#ffc515]">
-        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between px-6 py-4">
+
+        <div
+          className="
+            mx-auto
+            flex
+            w-full
+            max-w-[1400px]
+            flex-wrap
+            items-center
+            justify-between
+            px-4
+            py-3
+            sm:px-6
+            sm:py-4
+          "
+        >
 
           {/* Logo */}
-          <div className="flex items-center gap-2">
-  <img
-    src="/reposheriff-logo.png"
-    alt="RepoSheriff logo"
-    className="h-12 w-16 object-contain"
-  />
+          <div className="flex min-w-0 items-center gap-2">
 
-  <span className="text-xl font-bold tracking-tight text-[#111111]">
-    RepoSheriff
-  </span>
-</div>
+            <img
+              src="/reposheriff-logo.png"
+              alt="RepoSheriff logo"
+              className="h-10 w-14 shrink-0 object-contain sm:h-12 sm:w-16"
+            />
 
-          {/* Navigation links */}
-          <div className="hidden items-center gap-6 whitespace-nowrap text-sm font-bold text-[#111111] md:flex">
+            <span className="text-lg font-bold tracking-tight text-[#111111] sm:text-xl">
+              RepoSheriff
+            </span>
+
+          </div>
+
+
+          {/* User */}
+          <div className="order-2 shrink-0">
+            <UserButton />
+          </div>
+
+
+          {/* =================================================
+              Navigation Links
+              Desktop: one row
+              Mobile: second horizontally scrollable row
+          ================================================== */}
+
+          <div
+            className="
+              order-3
+              mt-2
+              flex
+              w-full
+              items-center
+              justify-start
+              gap-4
+              overflow-x-auto
+              text-xs
+              font-bold
+              text-[#111111]
+
+              [scrollbar-width:none]
+              [&::-webkit-scrollbar]:hidden
+
+              sm:gap-5
+              sm:text-sm
+
+              md:order-none
+              md:mt-0
+              md:w-auto
+              md:max-w-none
+              md:justify-end
+              md:gap-6
+              md:overflow-visible
+            "
+          >
 
             {/* Repository Health */}
             <span
-              className={
+              className={`shrink-0 whitespace-nowrap ${
                 mounted && repositoryAnalyzed
                   ? "cursor-pointer hover:underline"
                   : "cursor-not-allowed opacity-50"
-              }
+              }`}
               onClick={() => {
                 if (!mounted || !repositoryAnalyzed) return;
 
@@ -351,13 +411,14 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+
             {/* Project Summary */}
             <span
-              className={
+              className={`shrink-0 whitespace-nowrap ${
                 mounted && repositoryAnalyzed
                   ? "cursor-pointer hover:underline"
                   : "cursor-not-allowed opacity-50"
-              }
+              }`}
               onClick={() => {
                 if (!mounted || !repositoryAnalyzed) return;
 
@@ -368,13 +429,14 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+
             {/* Issue Suggestions */}
             <span
-              className={
+              className={`shrink-0 whitespace-nowrap ${
                 mounted && repositoryAnalyzed
                   ? "cursor-pointer hover:underline"
                   : "cursor-not-allowed opacity-50"
-              }
+              }`}
               onClick={() => {
                 if (!mounted || !repositoryAnalyzed) return;
 
@@ -385,13 +447,14 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+
             {/* Documentation */}
             <span
-              className={
+              className={`shrink-0 whitespace-nowrap ${
                 mounted && repositoryAnalyzed
                   ? "cursor-pointer hover:underline"
                   : "cursor-not-allowed opacity-50"
-              }
+              }`}
               onClick={() => {
                 if (!mounted || !repositoryAnalyzed) return;
 
@@ -402,136 +465,191 @@ Rules:
               {(!mounted || !repositoryAnalyzed) && " 🔒"}
             </span>
 
+
             {/* Interview */}
-              <span
-                className={
-                  mounted && repositoryAnalyzed
-                    ? "cursor-pointer hover:underline"
-                    : "cursor-not-allowed opacity-50"
-                }
-                onClick={() => {
-                  if (!mounted || !repositoryAnalyzed) return;
+            <span
+              className={`shrink-0 whitespace-nowrap ${
+                mounted && repositoryAnalyzed
+                  ? "cursor-pointer hover:underline"
+                  : "cursor-not-allowed opacity-50"
+              }`}
+              onClick={() => {
+                if (!mounted || !repositoryAnalyzed) return;
 
-                  window.location.href = "/dashboard/interview";
-                }}
-              >
-                Interview Question
-                {(!mounted || !repositoryAnalyzed) && " 🔒"}
-              </span>
+                window.location.href = "/dashboard/interview";
+              }}
+            >
+              Interview Question
+              {(!mounted || !repositoryAnalyzed) && " 🔒"}
+            </span>
 
-              {/* GitHub Tutorials */}
 
-              <span
-                className="cursor-pointer hover:underline"
-                onClick={() => {
-                  window.location.href = "/dashboard/tutorials";
-                }}
-              >
-                GitHub Tutorials
-              </span>
+            {/* GitHub Tutorials */}
+            <span
+              className="shrink-0 cursor-pointer whitespace-nowrap hover:underline"
+              onClick={() => {
+                window.location.href = "/dashboard/tutorials";
+              }}
+            >
+              GitHub Tutorials
+            </span>
+
 
             {/* About */}
             <span
-              className="cursor-pointer whitespace-nowrap hover:underline"
+              className="shrink-0 cursor-pointer whitespace-nowrap hover:underline"
               onClick={() => {
                 window.location.href = "/dashboard/about";
               }}
             >
               About
             </span>
-            
 
           </div>
 
-          <UserButton />
-
         </div>
+
       </nav>
+
 
       {/* =====================================================
           Hero
       ====================================================== */}
-      <section className="mx-auto max-w-6xl px-6 pb-20 pt-24">
+
+      <section className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:px-6 sm:pb-20 sm:pt-20 md:pt-24">
 
         <div className="mx-auto max-w-3xl text-center">
 
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e9d99d] bg-[#fff3c4] px-4 py-2 text-sm text-[#8d6d00]">
-            <span className="h-2 w-2 rounded-full bg-[#ffc515]" />
-            Open-source repository intelligence
+          <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-[#e9d99d] bg-[#fff3c4] px-3 py-2 text-xs text-[#8d6d00] sm:px-4 sm:text-sm">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#ffc515]" />
+            <span className="truncate">
+              Open-source repository intelligence
+            </span>
           </div>
 
+
           {/* Heading */}
-          <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
+          <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-7xl">
             Your repo has secrets,
             <span className="text-[#b28700]">
               {" "}We find them.
             </span>
           </h1>
 
+
           {/* Description */}
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#6b685f] dark:text-gray-300">
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-[#6b685f] sm:mt-6 sm:text-lg sm:leading-8 dark:text-gray-300">
             RepoSheriff analyzes GitHub repositories, scores their health,
             finds problems, and tells contributors exactly what to improve.
           </p>
 
+
           {/* Scanner */}
-          <div className="mx-auto mt-10 max-w-2xl">
-  <div className="flex flex-col gap-3 rounded-2xl border border-[#e9e2cf] bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-900 md:flex-row">
+          <div className="mx-auto mt-8 w-full max-w-2xl sm:mt-10">
 
-    <input
-      type="text"
-      value={repoUrl}
-      onChange={(e) => setRepoUrl(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          handleScan();
-        }
-      }}
-      placeholder="https://github.com/owner/repository"
-      className="min-w-0 flex-1 rounded-xl bg-transparent px-4 py-3 text-[#111111] outline-none placeholder:text-[#aaa69a] dark:text-white dark:placeholder:text-gray-500"
-    />
+            <div
+              className="
+                flex
+                flex-col
+                gap-3
+                rounded-2xl
+                border
+                border-[#e9e2cf]
+                bg-white
+                p-3
+                shadow-xl
+                dark:border-gray-700
+                dark:bg-gray-900
+                md:flex-row
+              "
+            >
 
-    <button
-      type="button"
-      onClick={handleScan}
-      disabled={isScanning}
-      className="rounded-xl bg-[#ffc515] px-7 py-3 font-semibold text-[#111111] transition hover:bg-[#edb500] disabled:cursor-not-allowed disabled:opacity-60"
-    >
-      {isScanning ? "Scanning..." : "Scan Repository"}
-    </button>
+              <input
+                type="text"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleScan();
+                  }
+                }}
+                placeholder="https://github.com/owner/repository"
+                className="
+                  min-w-0
+                  flex-1
+                  rounded-xl
+                  bg-transparent
+                  px-4
+                  py-3
+                  text-sm
+                  text-[#111111]
+                  outline-none
+                  placeholder:text-[#aaa69a]
+                  dark:text-white
+                  dark:placeholder:text-gray-500
+                "
+              />
 
-  </div>
 
-  <p className="mt-3 text-xs text-[#8b887e] dark:text-gray-400">
-    No GitHub installation required. Paste a public repository URL.
-  </p>
-</div>
+              <button
+                type="button"
+                onClick={handleScan}
+                disabled={isScanning}
+                className="
+                  w-full
+                  rounded-xl
+                  bg-[#ffc515]
+                  px-7
+                  py-3
+                  font-semibold
+                  text-[#111111]
+                  transition
+                  hover:bg-[#edb500]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-60
+                  md:w-auto
+                  md:shrink-0
+                "
+              >
+                {isScanning ? "Scanning..." : "Scan Repository"}
+              </button>
+
+            </div>
+
+
+            <p className="mt-3 text-xs leading-5 text-[#8b887e] dark:text-gray-400">
+              No GitHub installation required. Paste a public repository URL.
+            </p>
+
+          </div>
 
         </div>
 
       </section>
 
-      
 
       {/* =====================================================
           Features
       ====================================================== */}
+
       <section className="border-t border-[#e9e2cf] bg-white dark:border-gray-700 dark:bg-[#111111]">
 
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20">
 
-          <div className="mb-12 max-w-2xl">
+          <div className="mb-10 max-w-2xl sm:mb-12">
 
             <p className="text-sm font-medium text-[#b28700]">
               WHAT REPOSHERIFF DOES
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold text-[#111111] dark:text-white md:text-4xl">
+
+            <h2 className="mt-3 text-2xl font-bold leading-tight text-[#111111] sm:text-3xl md:text-4xl dark:text-white">
               From GitHub repository to actionable report.
             </h2>
 
           </div>
+
 
           <div className="grid gap-5 md:grid-cols-3">
 
@@ -541,11 +659,13 @@ Rules:
               description="Get a clear score out of 100 based on repository quality and activity."
             />
 
+
             <Feature
               number="02"
               title="Find Problems"
               description="Discover missing documentation, stale issues, weak contributor practices, and more."
             />
+
 
             <Feature
               number="03"
@@ -559,16 +679,19 @@ Rules:
 
       </section>
 
+
       {/* =====================================================
           Footer
       ====================================================== */}
-      <footer className="border-t border-[#e9e2cf] bg-[#ffc515] px-6 py-8 text-center text-sm text-[#5f531f]">
+
+      <footer className="border-t border-[#e9e2cf] bg-[#ffc515] px-4 py-7 text-center text-xs leading-5 text-[#5f531f] sm:px-6 sm:py-8 sm:text-sm">
         RepoSheriff — GitHub repository health & contributor intelligence
       </footer>
 
     </main>
   );
 }
+
 
 /* =========================================================
    Check Component
@@ -590,6 +713,7 @@ function Check({
         {name}
       </span>
 
+
       <span
         className={`rounded-full px-3 py-1 text-xs font-medium ${
           passed
@@ -603,6 +727,7 @@ function Check({
     </div>
   );
 }
+
 
 /* =========================================================
    Feature Component
@@ -618,15 +743,17 @@ function Feature({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-6 transition hover:-translate-y-1 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900">
+    <div className="rounded-2xl border border-[#e9e2cf] bg-[#fffdf5] p-5 transition hover:-translate-y-1 hover:shadow-lg sm:p-6 dark:border-gray-700 dark:bg-gray-900">
 
       <span className="text-sm font-semibold text-[#b28700]">
         {number}
       </span>
 
+
       <h3 className="mt-5 text-xl font-semibold text-[#111111] dark:text-white">
         {title}
       </h3>
+
 
       <p className="mt-3 leading-7 text-[#6b685f] dark:text-gray-300">
         {description}

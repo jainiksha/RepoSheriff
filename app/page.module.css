@@ -887,79 +887,539 @@
    RESPONSIVE
 ========================================= */
 
+
+/* =========================================
+   TABLET
+========================================= */
+
 @media (max-width: 900px) {
+
+  .navbar {
+    padding: 0 5%;
+  }
 
   .hero {
     grid-template-columns: 1fr;
+    gap: 45px;
+    padding: 70px 5%;
+  }
+
+  .heroContent {
+    max-width: 750px;
   }
 
   .report {
-    margin-top: 20px;
+    max-width: 520px;
+    margin: 0 auto;
   }
 
   .checkGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
 }
 
 
+/* =========================================
+   MOBILE
+========================================= */
+
 @media (max-width: 650px) {
 
+  /* =====================================
+     NAVBAR
+  ===================================== */
+
   .navbar {
-    padding: 0 20px;
+    height: auto;
+    min-height: 65px;
+
+    padding: 12px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    flex-wrap: wrap;
+    gap: 10px;
+
+    box-sizing: border-box;
   }
+
+
+  /* Logo */
+
+  .logo {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    font-size: 17px;
+  }
+
+  .logo img {
+    width: 32px;
+    height: 32px;
+  }
+
+
+  /* Navigation links */
 
   .navLinks {
-    display: none;
+    display: flex;
+
+    width: 100%;
+
+    order: 3;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 14px;
+
+    padding-top: 8px;
+    padding-bottom: 4px;
+
+    flex-wrap: wrap;
   }
+
+  .navLinks a {
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+
+  /* Navbar button */
 
   .navButton {
-    padding: 10px 13px;
+    padding: 9px 12px;
+
+    font-size: 10px;
   }
+
+
+  /* =====================================
+     HERO
+  ===================================== */
 
   .hero {
-    padding: 65px 20px;
+    min-height: auto;
+
+    padding: 55px 18px 65px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 40px;
+
+    box-sizing: border-box;
   }
 
+
+  .heroContent {
+    width: 100%;
+    max-width: none;
+  }
+
+
+  .eyebrow {
+    font-size: 9px;
+    letter-spacing: 1.2px;
+  }
+
+
   .hero h1 {
-    font-size: 50px;
+    margin-top: 20px;
+
+    font-size: clamp(38px, 12vw, 52px);
+
+    line-height: 0.98;
+
+    letter-spacing: -2.5px;
+  }
+
+
+  .heroDescription {
+    max-width: 100%;
+
+    margin-top: 22px;
+
+    font-size: 14px;
+
+    line-height: 1.65;
+  }
+
+
+  /* =====================================
+     SCANNER
+  ===================================== */
+
+  .scanner {
+    width: 100%;
+    max-width: none;
+
+    margin-top: 28px;
+
+    padding: 5px;
+
+    display: flex;
+    flex-direction: column;
+
+    box-sizing: border-box;
+  }
+
+
+  .scanner input {
+    width: 100%;
+
+    min-height: 52px;
+
+    padding: 14px;
+
+    box-sizing: border-box;
+
+    font-size: 12px;
+  }
+
+
+  .scanner button {
+    width: 100%;
+
+    min-height: 48px;
+
+    padding: 12px 20px;
+  }
+
+
+  .scannerNote {
+    font-size: 8px;
+
+    line-height: 1.5;
+  }
+
+
+  /* =====================================
+     SHERIFF REPORT
+  ===================================== */
+
+  .report {
+    width: 100%;
+    max-width: none;
+
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    border-radius: 8px;
+  }
+
+
+  .reportHeader {
+    padding-bottom: 17px;
+  }
+
+
+  .reportHeader h2 {
+    font-size: 18px;
+  }
+
+
+  .score {
+    gap: 14px;
+
+    padding: 22px 0;
+  }
+
+
+  .score > strong {
+    font-size: 52px;
+
     letter-spacing: -3px;
   }
 
-  .scanner {
-    flex-direction: column;
-  }
 
-  .scanner input {
-    min-height: 52px;
-  }
-
-  .scanner button {
-    min-height: 48px;
-  }
+  /* =====================================
+     STATS
+  ===================================== */
 
   .stats {
     grid-template-columns: repeat(2, 1fr);
   }
 
+
+  .stats > div {
+    padding: 28px 12px;
+  }
+
+
   .stats > div:nth-child(2) {
     border-right: none;
   }
 
-  .checks,
-  .how {
-    padding: 85px 20px;
+
+  .stats > div:nth-child(3),
+  .stats > div:nth-child(4) {
+    border-top: 1px solid var(--border);
   }
 
-  .checkGrid,
-  .steps {
+
+  .stats strong {
+    font-size: 28px;
+  }
+
+
+  .stats span {
+    font-size: 8px;
+  }
+
+
+  /* =====================================
+     WHAT WE CHECK
+  ===================================== */
+
+  .checks {
+    padding: 70px 18px;
+  }
+
+
+  .sectionHeading {
+    max-width: none;
+  }
+
+
+  .sectionHeading > small {
+    font-size: 8px;
+  }
+
+
+  .sectionHeading h2 {
+    margin-top: 15px;
+
+    font-size: clamp(38px, 11vw, 52px);
+
+    line-height: 1;
+
+    letter-spacing: -2.5px;
+  }
+
+
+  .sectionHeading p {
+    margin-top: 20px;
+
+    font-size: 13px;
+
+    line-height: 1.65;
+  }
+
+
+  /* =====================================
+     CHECK CARDS
+  ===================================== */
+
+  .checkGrid {
+    margin-top: 40px;
+
     grid-template-columns: 1fr;
   }
 
-  .footer {
-    flex-direction: column;
+
+  .checkCard {
+    min-height: 185px;
+
+    padding: 22px;
+  }
+
+
+  .checkCard h3 {
+    margin-top: 35px;
+
+    font-size: 18px;
+  }
+
+
+  .checkCard p {
+    max-width: 100%;
+
+    font-size: 11px;
+  }
+
+
+  /* =====================================
+     HOW IT WORKS
+  ===================================== */
+
+  .how {
+    padding: 70px 18px;
+  }
+
+
+  .steps {
+    margin-top: 40px;
+
+    grid-template-columns: 1fr;
+
     gap: 15px;
+  }
+
+
+  .step {
+    min-height: 190px;
+
+    padding: 24px;
+  }
+
+
+  .step h3 {
+    margin-top: 35px;
+
+    font-size: 25px;
+  }
+
+
+  .step p {
+    max-width: 100%;
+  }
+
+
+  /* =====================================
+     FINAL CTA
+  ===================================== */
+
+  .finalCta {
+    padding: 75px 18px;
+  }
+
+
+  .finalCta img {
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 20px;
+  }
+
+
+  .finalCta h2 {
+    font-size: clamp(40px, 12vw, 58px);
+
+    letter-spacing: -3px;
+  }
+
+
+  .finalCta p {
+    font-size: 13px;
+
+    line-height: 1.6;
+  }
+
+
+  .finalCta button {
+    width: 100%;
+    max-width: 280px;
+  }
+
+
+  /* =====================================
+     FOOTER
+  ===================================== */
+
+  .footer {
+    padding: 25px 18px;
+
+    flex-direction: column;
+
+    gap: 15px;
+
+    text-align: center;
+  }
+
+}
+
+
+/* =========================================
+   SMALL PHONES
+========================================= */
+
+@media (max-width: 400px) {
+
+  .navbar {
+    padding: 10px 14px;
+  }
+
+
+  .logo {
+    font-size: 15px;
+  }
+
+
+  .logo img {
+    width: 29px;
+    height: 29px;
+  }
+
+
+  .navButton {
+    padding: 8px 10px;
+
+    font-size: 9px;
+  }
+
+
+  .navLinks {
+    gap: 9px;
+  }
+
+
+  .navLinks a {
+    font-size: 10px;
+  }
+
+
+  .hero {
+    padding: 45px 15px 55px;
+  }
+
+
+  .hero h1 {
+    font-size: 38px;
+
+    letter-spacing: -2px;
+  }
+
+
+  .report {
+    padding: 17px;
+  }
+
+
+  .score > strong {
+    font-size: 46px;
+  }
+
+
+  .checks,
+  .how {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+
+  .checkCard {
+    padding: 20px;
+  }
+
+
+  .step {
+    padding: 20px;
+  }
+
+
+  .finalCta {
+    padding: 60px 15px;
   }
 
 }
